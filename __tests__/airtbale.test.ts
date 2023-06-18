@@ -4,12 +4,12 @@ import { env } from "../src/env.mjs"
 
 describe("Airtable", () => {
 	test("can listRecords", () => {
-		const table = new Table(
-			env.AIRTABLE_API_KEY,
-			"appGjiqxJsDA2rAp4",
-			"TestData",
-			z.object({ name: z.string() })
-		)
+		const table = new Table({
+			apiKey: env.AIRTABLE_API_KEY,
+			baseId: "appGjiqxJsDA2rAp4",
+			tableId: "TestData",
+			schema: z.object({ name: z.string() }),
+		})
 
 		const expected = [
 			{ "Full Name": "Test Testerson", Notes: "a test user", Status: "Done" },

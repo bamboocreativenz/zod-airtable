@@ -85,21 +85,36 @@ type FieldT =
 	| CollaboratorT
 	| Array<CollaboratorT>
 
+/**
+ * apiKey: Airtable Personal Access Token - https://airtable.com/create/tokens
+ * baseId: appId
+ * tableId: table name or tableId
+ * schema: zod schema for fields
+ */
 export default class Table<T extends z.ZodType<any, any, z.RecordType<string, FieldT>>> {
 	private table: AirtableSDK.Table<FieldSet>
 	private schema: T
 	private listSchema: z.ZodArray<
-			z.ZodObject<{ id: z.ZodString; createdTime: z.ZodString; fields: T }>
-		>
+		z.ZodObject<{ id: z.ZodString; createdTime: z.ZodString; fields: T }>
+	>
 
-	constructor(apiKey: string, baseName: string, tableName: string, schema: T) {
-		this.table = new AirtableSDK({ apiKey }).base(baseName).table(tableName)
-		this.schema = schema
-		this.listSchema = z.array(z.object({
+	constructor(args: {
+		apiKey: string
+		baseId: string
+		tableId: string
+		schema: T
+	}) {
+		this.table = new AirtableSDK({ apiKey: args.apiKey })
+			.base(args.baseId)
+			.table(args.tableId)
+		this.schema = args.schema
+		this.listSchema = z.array(
+			z.object({
 				id: z.string(),
 				createdTime: z.string(),
-				fields: schema
+				fields: args.schema,
 			})
+		)
 	}
 
 	public async listRecords() {
