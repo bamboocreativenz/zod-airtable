@@ -12,9 +12,8 @@
 	},
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"build": "turbo build",
-		"compile": "tsc",
-		"dev": "turbo dev",
+		"build": "turbo tsc",
+		"dev": "echo \"This is a package, there is no dev env. Run tests instead 😘\" && exit 1",
 		"format": "prettier \"**/*\" --ignore-unknown",
 		"format:write": "yarn format --write",
 		"lint": "npx eslint . --max-warnings 0 --report-unused-disable-directives",
@@ -22,8 +21,7 @@
 		"lint:prune": "ts-prune",
 		"lint:spelling": "cspell \"**\" \".github/**/*\""
 	},
-	"dependencies": {
-	},
+	"dependencies": {},
 	"devDependencies": {
 		"@types/node": "^20.3.1",
 		"@typescript-eslint/eslint-plugin": "^5.59.11",
