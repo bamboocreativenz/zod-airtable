@@ -12,13 +12,12 @@
 	},
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"build": "next build",
+		"build": "turbo build",
 		"compile": "tsc",
-		"dev": "next dev",
+		"dev": "turbo dev",
 		"format": "prettier \"**/*\" --ignore-unknown",
 		"format:write": "yarn format --write",
 		"lint": "npx eslint . --max-warnings 0 --report-unused-disable-directives",
-		"lint:md": "npx markdownlint \"**/*.md\" \".github/**/*.md\"",
 		"lint:package": "npmPkgJsonLint .",
 		"lint:prune": "ts-prune",
 		"lint:spelling": "cspell \"**\" \".github/**/*\""
