@@ -21,7 +21,7 @@
 		"lint:md": "npx markdownlint \"**/*.md\" \".github/**/*.md\"",
 		"lint:package": "npmPkgJsonLint .",
 		"lint:prune": "ts-prune",
-		"lint:spelling": "cspell \"**\" \".github/**/*\"",
+		"lint:spelling": "cspell \"**\" \".github/**/*\""
 	},
 	"dependencies": {
 	},
