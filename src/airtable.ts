@@ -45,7 +45,49 @@ const FieldZ = z.union([
 ])
 export const FieldSetZ = z.record(FieldZ)
 
-export default class Table<T extends z.ZodTypeAny> {
+type CollaboratorT = {
+	id: string
+	email: string
+	name: string
+}
+
+type ThumbnailT = {
+	url: string
+	width: string
+	height: string
+}
+
+type AttatchmentT = Array<{
+	id: string
+	url: string
+	filename: string
+	size: number
+	type: string
+	thumbnails: {
+		small: ThumbnailT
+		large: ThumbnailT
+		full: ThumbnailT
+	}
+}>
+
+type FieldT =
+	| undefined
+	| string
+	| number
+	| boolean
+	| Array<string>
+	| Array<{
+			id: string
+			email: string
+			name: string
+	  }>
+	| AttatchmentT
+	| CollaboratorT
+	| Array<CollaboratorT>
+
+export default class Table<
+	T extends z.ZodType<any, any, z.RecordType<string, FieldT>>
+> {
 	private table: AirtableSDK.Table<FieldSet>
 	private schema: T
 
