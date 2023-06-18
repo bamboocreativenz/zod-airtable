@@ -85,15 +85,21 @@ type FieldT =
 	| CollaboratorT
 	| Array<CollaboratorT>
 
-export default class Table<
-	T extends z.ZodType<any, any, z.RecordType<string, FieldT>>
-> {
+export default class Table<T extends z.ZodType<any, any, z.RecordType<string, FieldT>>> {
 	private table: AirtableSDK.Table<FieldSet>
 	private schema: T
+	private listSchema: z.ZodArray<
+			z.ZodObject<{ id: z.ZodString; createdTime: z.ZodString; fields: T }>
+		>
 
 	constructor(apiKey: string, baseName: string, tableName: string, schema: T) {
 		this.table = new AirtableSDK({ apiKey }).base(baseName).table(tableName)
 		this.schema = schema
+		this.listSchema = z.array(z.object({
+				id: z.string(),
+				createdTime: z.string(),
+				fields: schema
+			})
 	}
 
 	public async listRecords() {
@@ -103,6 +109,6 @@ export default class Table<
 			.catch((err) => {
 				throw new Error(err)
 			})
-		return z.array(this.schema).parse(data)
+		return this.listSchema.parse(data)
 	}
 }
