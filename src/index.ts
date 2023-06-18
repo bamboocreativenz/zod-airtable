@@ -1,3 +1,3 @@
-import Airtable from "./airtable";
+import Table from "./airtable"
 
-export { Airtable };
+export { Table }
