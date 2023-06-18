@@ -6,8 +6,28 @@
 	},
 	"extends": [
 		"eslint:recommended",
-		"plugin:@typescript-eslint/recommended",
-		"plugin:@typescript-eslint/recommended-requiring-type-checking"
+		"plugin:typescript-sort-keys/recommended"
+	],
+	"overrides": [
+		{
+			"extends": [
+				"plugin:@typescript-eslint/recommended",
+				"plugin:@typescript-eslint/recommended-requiring-type-checking"
+			],
+			"files": ["**/*.{ts}"],
+			"parserOptions": {
+				"tsconfigRootDir": "__dirname",
+				"project": ["./tsconfig.json"]
+			}
+		},
+		{
+			"files": "*.json",
+			"parser": "jsonc-eslint-parser",
+			"rules": {
+				"jsonc/sort-keys": "error"
+			},
+			"extends": ["plugin:jsonc/recommended-with-json"]
+		}
 	],
 	"parser": "@typescript-eslint/parser",
 	"parserOptions": {
@@ -15,8 +35,16 @@
 		"sourceType": "module",
 		"project": true
 	},
-	"plugins": ["@typescript-eslint", "@typescript-eslint/await-thenable"],
+	"plugins": [
+		"@typescript-eslint",
+		"@typescript-eslint/await-thenable",
+		"simple-import-sort",
+		"typescript-sort-keys"
+	],
+	"root": true,
 	"rules": {
-		"report-unused-disable-directives": true
+		"report-unused-disable-directives": true,
+		"simple-import-sort/exports": "error",
+		"simple-import-sort/imports": "error"
 	}
 }
