@@ -26,7 +26,6 @@
 	"dependencies": {
 		"@t3-oss/env-core": "^0.4.1",
 		"airtable": "^0.12.1",
-		"jest": "^29.5.0",
 		"zod": "^3.21.4"
 	},
 	"devDependencies": {
@@ -45,7 +44,9 @@
 		"npm-package-json-lint-config-default": "^5.0.0",
 		"prettier": "^2.8.8",
 		"ts-prune": "^0.10.3",
-		"turbo": "^1.10.3",
+		"jest": "^29.5.0",
+		"ts-jest": "^29.1.1",
+		"turbo": "^1.10.12",
 		"typescript": "^5.1.3"
 	}
 }
