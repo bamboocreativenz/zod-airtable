@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { Table } from "../src"
-import { env } from "../src/env.mjs"
+import { env } from "../src/env.ts"
 
 describe("Airtable", () => {
 	test("can listRecords", () => {
@@ -21,7 +21,7 @@ describe("Airtable", () => {
 		]
 
 		return table
-			.listRecords()
+			.getAllRecords()
 			.then((records) => expect(records.map((r) => r.fields)).toEqual(expected))
 	})
 })

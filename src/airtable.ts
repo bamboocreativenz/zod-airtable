@@ -9,7 +9,9 @@ import { SelectQueryParamsT, zSelectQueryParams } from "./types/queryParams"
  * tableId: table name or tableId
  * schema: zod schema for fields
  */
-export default class Table<T extends z.ZodType<any, any, z.RecordType<string, FieldT>>> {
+export default class Table<
+	T extends z.ZodType<any, any, z.RecordType<string, FieldT>>
+> {
 	private table: AirtableSDK.Table<FieldSet>
 	private schema: T
 	private listSchema: z.ZodArray<
@@ -51,7 +53,7 @@ export default class Table<T extends z.ZodType<any, any, z.RecordType<string, Fi
 		const result = this.listSchema.safeParse(data)
 		if (!result.success) {
 			// TODO log error with sentry and generate slack notification
-			// TODO Consider seperating out the failing records and returning 2 arrays. One of data that succeeded and one that didn't
+			// TODO Consider separating out the failing records and returning 2 arrays. One of data that succeeded and one that didn't
 			// TODO We should make the function capable of operating in different modes. eg filter out bad records, 2 array mode above, throw mode or return result
 			throw new Error(result.error.message)
 		} else {
