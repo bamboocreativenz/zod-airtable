@@ -45,7 +45,7 @@ export default class ZodAirTable<
 	 * @param query Optional query params inculding filterByFormula, maxRecords, etc
 	 * @returns Array of validated records
 	 */
-	public async getAllRecords(query: SelectQueryParamsT = {}) {
+	public async listAllRecords(query: SelectQueryParamsT = {}) {
 		const data = await this.table
 			.select(zSelectQueryParams.parse(query))
 			.all()

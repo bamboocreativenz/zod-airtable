@@ -20,7 +20,7 @@ describe("Airtable", () => {
 			},
 		]
 
-		const uut = await table.getAllRecords()
+		const uut = await table.listAllRecords()
 
 		expect(uut.map((r) => r.fields)).toEqual(expected)
 	})
