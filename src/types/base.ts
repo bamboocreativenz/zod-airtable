@@ -85,6 +85,7 @@ export const ListBasesZ = z.object({
 })
 
 export const BaseZ = z.object({
+	id: baseIdZ,
 	tables: z.array(TableZ),
 })
 

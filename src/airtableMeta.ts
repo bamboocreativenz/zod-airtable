@@ -1,7 +1,7 @@
 import { z } from "zod"
 import axios from "axios"
 import { FieldT } from "./types/fields.ts"
-import { CreateBaseZ, ListBasesZ } from "./types/base.ts"
+import { BaseZ, CreateBaseZ, ListBasesZ, TableZ } from "./types/base.ts"
 import { baseIdZ } from "./types/airtableIds.ts"
 
 export default class ZodAirTableMeta {
@@ -17,7 +17,7 @@ export default class ZodAirTableMeta {
 	/**
 	 * List bases
 	 * @returns list of bases the API key can access in the order they appear on the user's home screen, 1000 bases at a time.
-	 * If there is another page to request, pass the offset as a URL query parameter.
+	 * If there is another page to request, pass the offset retrieved from the first request as a URL query parameter.
 	 */
 	public listBases = z
 		.function()
@@ -45,7 +45,7 @@ export default class ZodAirTableMeta {
 					"Content-Type": "application/json",
 				},
 			})
-			return res.data
+			return BaseZ.parse(res.data)
 		})
 
 	public getBaseSchema = z
@@ -58,6 +58,6 @@ export default class ZodAirTableMeta {
 					Authorization: `Bearer ${this.apiKey}`,
 				},
 			})
-			return res.data
+			return z.array(TableZ).parse(res.data)
 		})
 }
