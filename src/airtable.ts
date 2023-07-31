@@ -1,15 +1,12 @@
 import AirtableSDK, { FieldSet } from "airtable"
 import { z } from "zod"
-import { FieldT } from "./types/fields"
 import { SelectQueryParamsT, zSelectQueryParams } from "./types/queryParams"
+import { FieldT } from "./types/fields"
 
 /**
- * apiKey: Airtable Personal Access Token - https://airtable.com/create/tokens
- * baseId: appId
- * tableId: table name or tableId
- * schema: zod schema for fields
+ * @class ZodAirTable
  */
-export default class Table<
+export default class ZodAirTable<
 	T extends z.ZodType<any, any, z.RecordType<string, FieldT>>
 > {
 	private table: AirtableSDK.Table<FieldSet>
@@ -17,7 +14,13 @@ export default class Table<
 	private listSchema: z.ZodArray<
 		z.ZodObject<{ id: z.ZodString; createdTime: z.ZodString; fields: T }>
 	>
-
+	/**
+	 * @constructor
+	 * @param apiKey: Airtable Personal Access Token - https://airtable.com/create/tokens
+	 * @param baseId: Airtable base/appId
+	 * @param tableId: Table name or tableId
+	 * @param schema: zod object({}) schema for fields
+	 */
 	constructor(args: {
 		apiKey: string
 		baseId: string
@@ -37,6 +40,11 @@ export default class Table<
 		)
 	}
 
+	/**
+	 * @function getAllRecords returns all records in the table
+	 * @param query Optional query params
+	 * @returns Array of validated records
+	 */
 	public async getAllRecords(query: SelectQueryParamsT = {}) {
 		const data = await this.table
 			.select(zSelectQueryParams.parse(query))

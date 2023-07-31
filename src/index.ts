@@ -1,3 +1,3 @@
-import Table from "./airtable"
+import ZodAirTable from "./airtable"
 
-export { Table }
+export { ZodAirTable }

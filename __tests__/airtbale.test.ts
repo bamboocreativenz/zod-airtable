@@ -1,10 +1,10 @@
 import { z } from "zod"
-import { Table } from "../src"
+import { ZodAirTable } from "../src"
 import { env } from "../src/env.ts"
 
 describe("Airtable", () => {
 	test("can listRecords", async () => {
-		const table = new Table({
+		const table = new ZodAirTable({
 			apiKey: env.AIRTABLE_API_KEY,
 			baseId: "appGjiqxJsDA2rAp4",
 			tableId: "TestData",
