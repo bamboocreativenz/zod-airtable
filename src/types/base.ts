@@ -88,9 +88,10 @@ export const BaseZ = z.object({
 	tables: z.array(TableZ),
 })
 
-export const CreateBaseZ = BaseZ.extend({
+export const CreateBaseZ = z.object({
 	name: z.string(),
 	workspaceId: workspaceIdZ,
+	tables: z.array(TableZ.omit({ id: true, primaryFieldId: true })),
 })
 
 export const MetaFieldsZ = TableZ.shape.fields.element
