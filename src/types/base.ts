@@ -1,41 +1,36 @@
 import { z } from "zod"
+import {
+	baseIdZ,
+	fieldIdZ,
+	tableIdZ,
+	viewIdZ,
+	workspaceIdZ,
+} from "./airtableIds"
+
+export const ViewZ = z.object({
+	id: viewIdZ,
+	name: z.string(),
+	type: z.enum([
+		"grid",
+		"form",
+		"calendar",
+		"gallery",
+		"kanban",
+		"timeline",
+		"block",
+	]),
+})
 
 export const TableZ = z.object({
 	description: z.string().optional(),
-	id: z.string().min(12).max(20).startsWith("tbl", "id must start with tbl"),
+	id: tableIdZ,
 	name: z.string(),
-	primaryFieldId: z
-		.string()
-		.min(12)
-		.max(20)
-		.startsWith("fld", "primaryFieldId must start with fld"),
-	views: z.array(
-		z.object({
-			id: z
-				.string()
-				.min(12)
-				.max(20)
-				.startsWith("viw", "views must start with viw"),
-			name: z.string(),
-			type: z.enum([
-				"grid",
-				"form",
-				"calendar",
-				"gallery",
-				"kanban",
-				"timeline",
-				"block",
-			]),
-		})
-	),
+	primaryFieldId: fieldIdZ,
+	views: z.array(ViewZ).optional(),
 	fields: z.array(
 		z.object({
 			description: z.string().optional(),
-			id: z
-				.string()
-				.min(12)
-				.max(20)
-				.startsWith("fld", "fields must start with fld"),
+			id: fieldIdZ,
 			name: z.string(),
 			type: z.enum([
 				"singleLineText",
@@ -78,9 +73,24 @@ export const TableZ = z.object({
 	),
 })
 
+export const ListBasesZ = z.object({
+	bases: z.array(
+		z.object({
+			id: baseIdZ,
+			name: z.string(),
+			permissionLevel: z.enum(["none", "read", "comment", "edit", "create"]),
+		})
+	),
+	offset: z.string().optional(),
+})
+
 export const BaseZ = z.object({
 	tables: z.array(TableZ),
 })
 
+export const CreateBaseZ = BaseZ.extend({
+	name: z.string(),
+	workspaceId: workspaceIdZ,
+})
+
 export const MetaFieldsZ = TableZ.shape.fields.element
-export const ViewZ = TableZ.shape.views.element
