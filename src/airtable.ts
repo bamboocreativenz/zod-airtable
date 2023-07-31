@@ -42,7 +42,7 @@ export default class ZodAirTable<
 
 	/**
 	 * @function getAllRecords returns all records in the table
-	 * @param query Optional query params
+	 * @param query Optional query params inculding filterByFormula, maxRecords, etc
 	 * @returns Array of validated records
 	 */
 	public async getAllRecords(query: SelectQueryParamsT = {}) {
