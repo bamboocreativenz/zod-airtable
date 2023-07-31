@@ -56,7 +56,7 @@ type ThumbnailT = {
 	height: string
 }
 
-type AttatchmentT = Array<{
+type AttatchmentT = {
 	id: string
 	url: string
 	filename: string
@@ -67,7 +67,7 @@ type AttatchmentT = Array<{
 		large: ThumbnailT
 		full: ThumbnailT
 	}
-}>
+}
 
 export type FieldT =
 	| undefined
@@ -80,6 +80,6 @@ export type FieldT =
 			email: string
 			name: string
 	  }>
-	| AttatchmentT
+	| Array<AttatchmentT>
 	| CollaboratorT
 	| Array<CollaboratorT>
