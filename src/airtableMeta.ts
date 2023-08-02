@@ -27,6 +27,7 @@ export default class ZodAirTableMeta {
 	public listBases = z
 		.function()
 		.args(z.string())
+		.returns(z.promise(ListBasesZ))
 		.implement(async (offset) => {
 			const url = offset
 				? `https://api.airtable.com/v0/meta/bases?offset=${offset}`
@@ -36,7 +37,7 @@ export default class ZodAirTableMeta {
 					Authorization: `Bearer ${this.apiKey}`,
 				},
 			})
-			return ListBasesZ.parse(res.data)
+			return res.data
 		})
 
 	/**
@@ -47,6 +48,7 @@ export default class ZodAirTableMeta {
 	public createBase = z
 		.function()
 		.args(CreateBaseZ)
+		.returns(z.promise(BaseZ))
 		.implement(async (base) => {
 			const url = `https://api.airtable.com/v0/meta/bases`
 			const res = await axios.post(url, base, {
@@ -55,7 +57,7 @@ export default class ZodAirTableMeta {
 					"Content-Type": "application/json",
 				},
 			})
-			return BaseZ.parse(res.data)
+			return res.data
 		})
 
 	/**
@@ -66,6 +68,7 @@ export default class ZodAirTableMeta {
 	public getBaseSchema = z
 		.function()
 		.args(baseIdZ)
+		.returns(z.promise(z.array(TableZ)))
 		.implement(async (baseId) => {
 			const url = `https://api.airtable.com/v0/meta/bases/${baseId}/tables`
 			const res = await axios.get(url, {
@@ -73,7 +76,7 @@ export default class ZodAirTableMeta {
 					Authorization: `Bearer ${this.apiKey}`,
 				},
 			})
-			return z.array(TableZ).parse(res.data)
+			return res.data
 		})
 
 	/**
@@ -116,6 +119,7 @@ export default class ZodAirTableMeta {
 	public getTableNameIdObjects = z
 		.function()
 		.args(baseIdZ)
+		.returns(z.promise(z.record(z.string())))
 		.implement(async (baseId) => {
 			const tables = await this.getNameIdObjects(baseId)
 
@@ -130,6 +134,7 @@ export default class ZodAirTableMeta {
 	public getFieldNameIdObjects = z
 		.function()
 		.args(baseIdZ)
+		.returns(z.promise(z.array(z.record(z.string()))))
 		.implement(async (baseId) => {
 			const tables = await this.getNameIdObjects(baseId)
 
