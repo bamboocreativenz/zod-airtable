@@ -3,7 +3,7 @@ import axios from "axios"
 import { FieldT } from "./types/fields.ts"
 import { BaseZ, CreateBaseZ, ListBasesZ, TableZ } from "./types/base.ts"
 import { baseIdZ } from "./types/airtableIds.ts"
-import { writeFieldIdEnum } from "./utils/writeFieldIdEnum.ts"
+import { writeFieldIdEnum, writeTablesIdEnum } from "./utils/writeFieldIdEnum.ts"
 
 export default class ZodAirTableMeta {
 	private apiKey: string
@@ -82,7 +82,7 @@ export default class ZodAirTableMeta {
 	 */
 
 	//TODO this currently only generates enums for the fields. We should have a function for the table ids as well - thats what we have actually used in AFRA.
-	public genFieldIdObjects = z
+	public getNameIdObjects = z
 		.function()
 		.args(baseIdZ)
 		.implement(async (baseId) => {
@@ -100,6 +100,7 @@ export default class ZodAirTableMeta {
 			return tables.map((table) => {
 				return {
 					tableName: table.name,
+					tableId: table.id,
 					fields: table.fields.reduce<Record<string, string>>((acc, field) => {
 						acc[field.name] = field.id
 						return acc
@@ -116,13 +117,19 @@ export default class ZodAirTableMeta {
 		.function()
 		.args(baseIdZ)
 		.implement(async (baseId) => {
-			const tablesEnums = await this.genFieldIdObjects(baseId)
+			const tablesEnums = await this.getNameIdObjects(baseId)
 
-			// Generate the enums
-			const enums = tablesEnums.map((table) => {
+			// Generate the field Enums per Table
+			return tablesEnums.map((table) => {
 				return writeFieldIdEnum(table)
 			})
-
-			return enums
 		})
+
+	public genTableIdEnums = z
+	.function()
+	.args(z.string(), baseIdZ)
+	.implement(async (baseName, baseId) => {
+		const tablesEnums = await this.getNameIdObjects(baseId)
+		// Generate the Table Enum
+		return writeTablesIdEnum(baseName, tablesEnums)
 }
