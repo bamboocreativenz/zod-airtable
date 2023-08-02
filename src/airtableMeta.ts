@@ -80,7 +80,9 @@ export default class ZodAirTableMeta {
 	 * Note the cron job should merge the existing enumObjects with the newly generated ones. That way
 	 * it allows for field name changes over time.
 	 */
-	public generateBaseTSEnumObjects = z
+
+	//TODO this currently only generates enums for the fields. We should have a function for the table ids as well - thats what we have actually used in AFRA.
+	public genFieldIdObjects = z
 		.function()
 		.args(baseIdZ)
 		.implement(async (baseId) => {
@@ -110,11 +112,11 @@ export default class ZodAirTableMeta {
 	 * generateTypescriptEnums is used to generate typescript fieldName -> fieldId enums from the Airtable Meta API
 	 * It is useful during development to grab the latest schema and get an enum that can be used in development
 	 */
-	public generateBaseTSEnums = z
+	public genFieldIdEnums = z
 		.function()
 		.args(baseIdZ)
 		.implement(async (baseId) => {
-			const tablesEnums = await this.generateBaseTSEnumObjects(baseId)
+			const tablesEnums = await this.genFieldIdObjects(baseId)
 
 			// Generate the enums
 			const enums = tablesEnums.map((table) => {
