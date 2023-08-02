@@ -51,7 +51,6 @@ export default class ZodAirTable<
 			.all()
 			.then((records) => {
 				return records.map((r) => {
-					//TODO enrich with field names
 					return r
 				})
 			})
