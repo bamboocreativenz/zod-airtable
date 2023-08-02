@@ -7,6 +7,9 @@ import {
 	writeFieldIdEnum,
 	writeTablesIdEnum,
 } from "./utils/writeFieldIdEnum.ts"
+import catchErrors from "./utils/catchErrors.ts"
+
+//TODO work out how we handle errors in this repo - ie throw yes/no and/or register with sentry?
 
 export default class ZodAirTableMeta {
 	private apiKey: string
@@ -27,17 +30,20 @@ export default class ZodAirTableMeta {
 	public listBases = z
 		.function()
 		.args(z.string())
-		.returns(z.promise(ListBasesZ))
 		.implement(async (offset) => {
-			const url = offset
-				? `https://api.airtable.com/v0/meta/bases?offset=${offset}`
-				: `https://api.airtable.com/v0/meta/bases`
-			const res = await axios.get(url, {
-				headers: {
-					Authorization: `Bearer ${this.apiKey}`,
-				},
-			})
-			return res.data
+			try {
+				const url = offset
+					? `https://api.airtable.com/v0/meta/bases?offset=${offset}`
+					: `https://api.airtable.com/v0/meta/bases`
+				const res = await axios.get(url, {
+					headers: {
+						Authorization: `Bearer ${this.apiKey}`,
+					},
+				})
+				return ListBasesZ.parse(res.data)
+			} catch (error) {
+				catchErrors(error)
+			}
 		})
 
 	/**
@@ -48,16 +54,19 @@ export default class ZodAirTableMeta {
 	public createBase = z
 		.function()
 		.args(CreateBaseZ)
-		.returns(z.promise(BaseZ))
 		.implement(async (base) => {
-			const url = `https://api.airtable.com/v0/meta/bases`
-			const res = await axios.post(url, base, {
-				headers: {
-					Authorization: `Bearer ${this.apiKey}`,
-					"Content-Type": "application/json",
-				},
-			})
-			return res.data
+			try {
+				const url = `https://api.airtable.com/v0/meta/bases`
+				const res = await axios.post(url, base, {
+					headers: {
+						Authorization: `Bearer ${this.apiKey}`,
+						"Content-Type": "application/json",
+					},
+				})
+				return BaseZ.parse(res.data)
+			} catch (error) {
+				catchErrors(error)
+			}
 		})
 
 	/**
@@ -68,15 +77,18 @@ export default class ZodAirTableMeta {
 	public getBaseSchema = z
 		.function()
 		.args(baseIdZ)
-		.returns(z.promise(z.array(TableZ)))
 		.implement(async (baseId) => {
-			const url = `https://api.airtable.com/v0/meta/bases/${baseId}/tables`
-			const res = await axios.get(url, {
-				headers: {
-					Authorization: `Bearer ${this.apiKey}`,
-				},
-			})
-			return res.data
+			try {
+				const url = `https://api.airtable.com/v0/meta/bases/${baseId}/tables`
+				const res = await axios.get(url, {
+					headers: {
+						Authorization: `Bearer ${this.apiKey}`,
+					},
+				})
+				return z.array(TableZ).parse(res.data)
+			} catch (error) {
+				catchErrors(error)
+			}
 		})
 
 	/**
@@ -119,26 +131,36 @@ export default class ZodAirTableMeta {
 	public getTableNameIdObjects = z
 		.function()
 		.args(baseIdZ)
-		.returns(z.promise(z.record(z.string())))
 		.implement(async (baseId) => {
-			const tables = await this.getNameIdObjects(baseId)
+			try {
+				const tables = await this.getNameIdObjects(baseId)
 
-			return tables.reduce((acc, table) => {
-				return {
-					...acc,
-					[table.tableName]: table.tableId,
-				}
-			}, {})
+				const tableNameIds = tables.reduce((acc, table) => {
+					return {
+						...acc,
+						[table.tableName]: table.tableId,
+					}
+				}, {})
+
+				return z.record(z.string()).parse(tableNameIds)
+			} catch (error) {
+				catchErrors(error)
+			}
 		})
 
 	public getFieldNameIdObjects = z
 		.function()
 		.args(baseIdZ)
-		.returns(z.promise(z.array(z.record(z.string()))))
 		.implement(async (baseId) => {
-			const tables = await this.getNameIdObjects(baseId)
+			try {
+				const tables = await this.getNameIdObjects(baseId)
 
-			return tables.map((table) => table.fields)
+				const fieldNameIds = tables.map((table) => table.fields)
+
+				return z.array(z.record(z.string())).parse(fieldNameIds)
+			} catch (error) {
+				catchErrors(error)
+			}
 		})
 
 	/**
@@ -149,20 +171,28 @@ export default class ZodAirTableMeta {
 		.function()
 		.args(baseIdZ)
 		.implement(async (baseId) => {
-			const tablesEnums = await this.getNameIdObjects(baseId)
+			try {
+				const tablesEnums = await this.getNameIdObjects(baseId)
 
-			// Generate the field Enums per Table
-			return tablesEnums.map((table) => {
-				return writeFieldIdEnum(table)
-			})
+				// Generate the field Enums per Table
+				return tablesEnums.map((table) => {
+					return writeFieldIdEnum(table)
+				})
+			} catch (error) {
+				catchErrors(error)
+			}
 		})
 
 	public genTableIdEnums = z
 		.function()
 		.args(z.string(), baseIdZ)
 		.implement(async (baseName, baseId) => {
-			const tablesEnums = await this.getNameIdObjects(baseId)
-			// Generate the Table Enum
-			return writeTablesIdEnum(baseName, tablesEnums)
+			try {
+				const tablesEnums = await this.getNameIdObjects(baseId)
+				// Generate the Table Enum
+				return writeTablesIdEnum(baseName, tablesEnums)
+			} catch (error) {
+				catchErrors(error)
+			}
 		})
 }
