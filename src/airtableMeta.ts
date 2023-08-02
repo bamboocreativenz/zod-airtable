@@ -46,8 +46,7 @@ export default class ZodAirTableMeta {
 				const data = ListBasesZ.parse(res.data)
 				return new Ok(data)
 			} catch (error) {
-				catchErrors(error)
-				return new Err(AIRTABLE_API_ERROR)
+				return catchErrors(error)
 			}
 		})
 
@@ -71,8 +70,7 @@ export default class ZodAirTableMeta {
 				const data = BaseZ.parse(res.data)
 				return new Ok(data)
 			} catch (error) {
-				catchErrors(error)
-				return new Err(AIRTABLE_API_ERROR)
+				return catchErrors(error)
 			}
 		})
 
@@ -95,8 +93,7 @@ export default class ZodAirTableMeta {
 				const data = z.array(TableZ).parse(res.data)
 				return new Ok(data)
 			} catch (error) {
-				catchErrors(error)
-				return new Err(AIRTABLE_API_ERROR)
+				return catchErrors(error)
 			}
 		})
 
@@ -117,8 +114,7 @@ export default class ZodAirTableMeta {
 				const data = z.record(z.string()).parse(tableNameIds)
 				return new Ok(data)
 			} catch (error) {
-				catchErrors(error)
-				return new Err(AIRTABLE_API_ERROR)
+				return catchErrors(error)
 			}
 		})
 
@@ -134,8 +130,7 @@ export default class ZodAirTableMeta {
 				const data = z.array(z.record(z.string())).parse(fieldNameIds)
 				return new Ok(data)
 			} catch (error) {
-				catchErrors(error)
-				return new Err(AIRTABLE_API_ERROR)
+				return catchErrors(error)
 			}
 		})
 
@@ -156,8 +151,7 @@ export default class ZodAirTableMeta {
 				})
 				return new Ok(data)
 			} catch (error) {
-				catchErrors(error)
-				return new Err(AIRTABLE_API_ERROR)
+				return catchErrors(error)
 			}
 		})
 
@@ -171,8 +165,7 @@ export default class ZodAirTableMeta {
 				const data = writeTablesIdEnum(baseName, tablesEnums)
 				return new Ok(data)
 			} catch (error) {
-				catchErrors(error)
-				return new Err(AIRTABLE_API_ERROR)
+				return catchErrors(error)
 			}
 		})
 

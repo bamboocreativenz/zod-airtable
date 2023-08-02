@@ -1,4 +1,4 @@
-import { ERROR_NOT_AUTHORISED, ERROR_BAD_REQUEST } from "../../constants"
+import { Err } from "ts-results-es"
 
 import Sentry from "../../initSentryForAPI"
 
@@ -12,10 +12,12 @@ export default function catchErrors(err: unknown | Error | string) {
 	Sentry.captureException(err)
 
 	if (typeof err === "string") {
-		throw new Error(err)
+		//throw new Error(err)
+		return new Err(err)
 	} else if (err instanceof Error) {
 		throw err
 	} else {
-		throw new Error(JSON.stringify(err))
+		// throw new Error(JSON.stringify(err))
+		return new Err(JSON.stringify(err))
 	}
 }
