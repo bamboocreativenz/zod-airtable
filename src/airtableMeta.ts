@@ -3,7 +3,10 @@ import axios from "axios"
 import { FieldT } from "./types/fields.ts"
 import { BaseZ, CreateBaseZ, ListBasesZ, TableZ } from "./types/base.ts"
 import { baseIdZ } from "./types/airtableIds.ts"
-import { writeFieldIdEnum, writeTablesIdEnum } from "./utils/writeFieldIdEnum.ts"
+import {
+	writeFieldIdEnum,
+	writeTablesIdEnum,
+} from "./utils/writeFieldIdEnum.ts"
 
 export default class ZodAirTableMeta {
 	private apiKey: string
@@ -126,10 +129,11 @@ export default class ZodAirTableMeta {
 		})
 
 	public genTableIdEnums = z
-	.function()
-	.args(z.string(), baseIdZ)
-	.implement(async (baseName, baseId) => {
-		const tablesEnums = await this.getNameIdObjects(baseId)
-		// Generate the Table Enum
-		return writeTablesIdEnum(baseName, tablesEnums)
+		.function()
+		.args(z.string(), baseIdZ)
+		.implement(async (baseName, baseId) => {
+			const tablesEnums = await this.getNameIdObjects(baseId)
+			// Generate the Table Enum
+			return writeTablesIdEnum(baseName, tablesEnums)
+		})
 }
