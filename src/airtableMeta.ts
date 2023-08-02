@@ -1,8 +1,7 @@
 import { z } from "zod"
 import axios from "axios"
-import { Ok, Err } from "ts-results-es"
+import { Ok } from "ts-results-es"
 
-import { FieldT } from "./types/fields.ts"
 import { BaseZ, CreateBaseZ, ListBasesZ, TableZ } from "./types/base.ts"
 import { baseIdZ } from "./types/airtableIds.ts"
 import {
@@ -10,7 +9,6 @@ import {
 	writeTablesIdEnum,
 } from "./utils/writeFieldIdEnum.ts"
 import catchErrors from "./utils/catchErrors.ts"
-import { AIRTABLE_API_ERROR } from "../constants"
 
 //TODO work out how we handle errors in this repo - ie throw yes/no and/or register with sentry?
 
