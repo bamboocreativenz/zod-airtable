@@ -1,5 +1,7 @@
 import { z } from "zod"
 import axios from "axios"
+import { Ok, Err } from "ts-results-es"
+
 import { FieldT } from "./types/fields.ts"
 import { BaseZ, CreateBaseZ, ListBasesZ, TableZ } from "./types/base.ts"
 import { baseIdZ } from "./types/airtableIds.ts"
@@ -8,6 +10,7 @@ import {
 	writeTablesIdEnum,
 } from "./utils/writeFieldIdEnum.ts"
 import catchErrors from "./utils/catchErrors.ts"
+import { AIRTABLE_API_ERROR } from "../constants"
 
 //TODO work out how we handle errors in this repo - ie throw yes/no and/or register with sentry?
 
@@ -29,8 +32,8 @@ export default class ZodAirTableMeta {
 	 */
 	public listBases = z
 		.function()
-		.args(z.string())
-		.implement(async (offset) => {
+		.args(z.object({ offset: z.number().optional() }))
+		.implement(async ({ offset }) => {
 			try {
 				const url = offset
 					? `https://api.airtable.com/v0/meta/bases?offset=${offset}`
@@ -40,9 +43,11 @@ export default class ZodAirTableMeta {
 						Authorization: `Bearer ${this.apiKey}`,
 					},
 				})
-				return ListBasesZ.parse(res.data)
+				const data = ListBasesZ.parse(res.data)
+				return new Ok(data)
 			} catch (error) {
 				catchErrors(error)
+				return new Err(AIRTABLE_API_ERROR)
 			}
 		})
 
@@ -54,18 +59,20 @@ export default class ZodAirTableMeta {
 	public createBase = z
 		.function()
 		.args(CreateBaseZ)
-		.implement(async (base) => {
+		.implement(async (baseSchema) => {
 			try {
 				const url = `https://api.airtable.com/v0/meta/bases`
-				const res = await axios.post(url, base, {
+				const res = await axios.post(url, baseSchema, {
 					headers: {
 						Authorization: `Bearer ${this.apiKey}`,
 						"Content-Type": "application/json",
 					},
 				})
-				return BaseZ.parse(res.data)
+				const data = BaseZ.parse(res.data)
+				return new Ok(data)
 			} catch (error) {
 				catchErrors(error)
+				return new Err(AIRTABLE_API_ERROR)
 			}
 		})
 
@@ -85,9 +92,87 @@ export default class ZodAirTableMeta {
 						Authorization: `Bearer ${this.apiKey}`,
 					},
 				})
-				return z.array(TableZ).parse(res.data)
+				const data = z.array(TableZ).parse(res.data)
+				return new Ok(data)
 			} catch (error) {
 				catchErrors(error)
+				return new Err(AIRTABLE_API_ERROR)
+			}
+		})
+
+	public getTableNameIdObjects = z
+		.function()
+		.args(baseIdZ)
+		.implement(async (baseId) => {
+			try {
+				const tables = await this.getNameIdObjects(baseId)
+
+				const tableNameIds = tables.reduce((acc, table) => {
+					return {
+						...acc,
+						[table.tableName]: table.tableId,
+					}
+				}, {})
+
+				const data = z.record(z.string()).parse(tableNameIds)
+				return new Ok(data)
+			} catch (error) {
+				catchErrors(error)
+				return new Err(AIRTABLE_API_ERROR)
+			}
+		})
+
+	public getFieldNameIdObjects = z
+		.function()
+		.args(baseIdZ)
+		.implement(async (baseId) => {
+			try {
+				const tables = await this.getNameIdObjects(baseId)
+
+				const fieldNameIds = tables.map((table) => table.fields)
+
+				const data = z.array(z.record(z.string())).parse(fieldNameIds)
+				return new Ok(data)
+			} catch (error) {
+				catchErrors(error)
+				return new Err(AIRTABLE_API_ERROR)
+			}
+		})
+
+	/**
+	 * generateTypescriptEnums is used to generate typescript fieldName -> fieldId enums from the Airtable Meta API
+	 * It is useful during development to grab the latest schema and get an enum that can be used in development
+	 */
+	public genFieldIdEnums = z
+		.function()
+		.args(baseIdZ)
+		.implement(async (baseId) => {
+			try {
+				const tablesEnums = await this.getNameIdObjects(baseId)
+
+				// Generate the field Enums per Table
+				const data = tablesEnums.map((table) => {
+					return writeFieldIdEnum(table)
+				})
+				return new Ok(data)
+			} catch (error) {
+				catchErrors(error)
+				return new Err(AIRTABLE_API_ERROR)
+			}
+		})
+
+	public genTableIdEnums = z
+		.function()
+		.args(z.string(), baseIdZ)
+		.implement(async (baseName, baseId) => {
+			try {
+				const tablesEnums = await this.getNameIdObjects(baseId)
+				// Generate the Table Enum
+				const data = writeTablesIdEnum(baseName, tablesEnums)
+				return new Ok(data)
+			} catch (error) {
+				catchErrors(error)
+				return new Err(AIRTABLE_API_ERROR)
 			}
 		})
 
@@ -97,7 +182,7 @@ export default class ZodAirTableMeta {
 	 * This enables you to track a data structure over time, eg setup a cron job and store the result in a hash table (firestore) or git repo
 	 * Note the cron job should merge the existing enumObjects with the newly generated ones. That way
 	 * it allows for field name changes over time.
-	 * This is an internal function. Use the getTableNameIdObjects & getFieldNameIdObjects functions below instead.
+	 * This is an internal function. Use the getTableNameIdObjects & getFieldNameIdObjects functions above instead.
 	 */
 
 	//TODO this currently only generates enums for the fields. We should have a function for the table ids as well - thats what we have actually used in AFRA.
@@ -126,73 +211,5 @@ export default class ZodAirTableMeta {
 					}, {}),
 				}
 			})
-		})
-
-	public getTableNameIdObjects = z
-		.function()
-		.args(baseIdZ)
-		.implement(async (baseId) => {
-			try {
-				const tables = await this.getNameIdObjects(baseId)
-
-				const tableNameIds = tables.reduce((acc, table) => {
-					return {
-						...acc,
-						[table.tableName]: table.tableId,
-					}
-				}, {})
-
-				return z.record(z.string()).parse(tableNameIds)
-			} catch (error) {
-				catchErrors(error)
-			}
-		})
-
-	public getFieldNameIdObjects = z
-		.function()
-		.args(baseIdZ)
-		.implement(async (baseId) => {
-			try {
-				const tables = await this.getNameIdObjects(baseId)
-
-				const fieldNameIds = tables.map((table) => table.fields)
-
-				return z.array(z.record(z.string())).parse(fieldNameIds)
-			} catch (error) {
-				catchErrors(error)
-			}
-		})
-
-	/**
-	 * generateTypescriptEnums is used to generate typescript fieldName -> fieldId enums from the Airtable Meta API
-	 * It is useful during development to grab the latest schema and get an enum that can be used in development
-	 */
-	public genFieldIdEnums = z
-		.function()
-		.args(baseIdZ)
-		.implement(async (baseId) => {
-			try {
-				const tablesEnums = await this.getNameIdObjects(baseId)
-
-				// Generate the field Enums per Table
-				return tablesEnums.map((table) => {
-					return writeFieldIdEnum(table)
-				})
-			} catch (error) {
-				catchErrors(error)
-			}
-		})
-
-	public genTableIdEnums = z
-		.function()
-		.args(z.string(), baseIdZ)
-		.implement(async (baseName, baseId) => {
-			try {
-				const tablesEnums = await this.getNameIdObjects(baseId)
-				// Generate the Table Enum
-				return writeTablesIdEnum(baseName, tablesEnums)
-			} catch (error) {
-				catchErrors(error)
-			}
 		})
 }
