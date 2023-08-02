@@ -74,7 +74,9 @@ export default class ZodAirTableMeta {
 		})
 
 	/**
-	 * You can also use it to generate enums on a cron job and source control them into a git repo
+	 * generateBaseTSEnumObjects is used to create a simple intermediary data struture representing
+	 * the FieldName -> FieldId structure in Airtable
+	 * This enables you to track a data structure over time, eg setup a cron job and store the result in a hash table (firestore) or git repo
 	 * Note the cron job should merge the existing enumObjects with the newly generated ones. That way
 	 * it allows for field name changes over time.
 	 */
