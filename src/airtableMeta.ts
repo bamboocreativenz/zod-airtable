@@ -78,14 +78,15 @@ export default class ZodAirTableMeta {
 
 	/**
 	 * generateBaseTSEnumObjects is used to create a simple intermediary data struture representing
-	 * the FieldName -> FieldId structure in Airtable
+	 * the Name -> Id duality for Tables and Fields in Airtable
 	 * This enables you to track a data structure over time, eg setup a cron job and store the result in a hash table (firestore) or git repo
 	 * Note the cron job should merge the existing enumObjects with the newly generated ones. That way
 	 * it allows for field name changes over time.
+	 * This is an internal function. Use the getTableNameIdObjects & getFieldNameIdObjects functions below instead.
 	 */
 
 	//TODO this currently only generates enums for the fields. We should have a function for the table ids as well - thats what we have actually used in AFRA.
-	public getNameIdObjects = z
+	private getNameIdObjects = z
 		.function()
 		.args(baseIdZ)
 		.implement(async (baseId) => {
@@ -110,6 +111,29 @@ export default class ZodAirTableMeta {
 					}, {}),
 				}
 			})
+		})
+
+	public getTableNameIdObjects = z
+		.function()
+		.args(baseIdZ)
+		.implement(async (baseId) => {
+			const tables = await this.getNameIdObjects(baseId)
+
+			return tables.reduce((acc, table) => {
+				return {
+					...acc,
+					[table.tableName]: table.tableId,
+				}
+			}, {})
+		})
+
+	public getFieldNameIdObjects = z
+		.function()
+		.args(baseIdZ)
+		.implement(async (baseId) => {
+			const tables = await this.getNameIdObjects(baseId)
+
+			return tables.map((table) => table.fields)
 		})
 
 	/**
