@@ -1,7 +1,7 @@
 import AirtableSDK, { FieldSet } from "airtable"
 import { z } from "zod"
 import { SelectQueryParamsT, zSelectQueryParams } from "./types/queryParams"
-import { FieldT } from "./types/fields"
+import { FieldT } from "./types/airtableFields"
 
 /**
  * @class ZodAirTable
