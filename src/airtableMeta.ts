@@ -45,7 +45,7 @@ export default class ZodAirTableMeta {
 				})
 				const results = ListBasesZ.safeParse(res.data)
 				if (!results.success) {
-					return Err(results.error.issues)
+					return new Err(results.error.issues)
 				} else {
 					return new Ok(results.data)
 				}
@@ -73,7 +73,7 @@ export default class ZodAirTableMeta {
 				})
 				const results = BaseZ.safeParse(res.data)
 				if (!results.success) {
-					return Err(results.error.issues)
+					return new Err(results.error.issues)
 				} else {
 					return new Ok(results.data)
 				}
@@ -100,7 +100,7 @@ export default class ZodAirTableMeta {
 				})
 				const results = z.array(TableZ).safeParse(res.data)
 				if (!results.success) {
-					return Err(results.error.issues)
+					return new Err(results.error.issues)
 				} else {
 					return new Ok(results.data)
 				}
