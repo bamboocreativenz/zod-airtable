@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const zSelectQueryParams = z
+export const SelectQueryParamsZ = z
 	.object({
 		fields: z.array(z.string()),
 		filterByFormula: z.string(),
@@ -29,4 +29,4 @@ export const zSelectQueryParams = z
  * @param userLocale The user locale to use
  * @param returnFieldsByFieldId Whether to return fields by name or by fieldId.
  */
-export type SelectQueryParamsT = z.infer<typeof zSelectQueryParams>
+export type SelectQueryParamsT = z.infer<typeof SelectQueryParamsZ>
