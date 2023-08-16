@@ -1,16 +1,12 @@
 import { z } from "zod"
 import axios from "axios"
-import { Ok } from "ts-results-es"
 
-import { BaseZ, CreateBaseZ, ListBasesZ, TableZ } from "./types/base.ts"
-import { baseIdZ } from "./types/airtableIds.ts"
-import {
-	writeFieldIdEnum,
-	writeTablesIdEnum,
-} from "./utils/writeFieldIdEnum.ts"
-import catchErrors from "./utils/catchErrors.ts"
+import { BaseZ, CreateBaseZ, ListBasesZ, TableZ } from "./types/airtableBase"
+import { baseIdZ } from "./types/airtableIds"
+import { writeFieldIdEnum, writeTablesIdEnum } from "./utils/writeFieldIdEnum"
+import catchErrors from "./utils/catchErrors"
 
-//TODO work out how we handle errors in this repo - ie throw yes/no and/or register with sentry?
+//TODO work out how we handle errors in this repo?
 
 export default class ZodAirTableMeta {
 	private apiKey: string
@@ -41,8 +37,7 @@ export default class ZodAirTableMeta {
 						Authorization: `Bearer ${this.apiKey}`,
 					},
 				})
-				const data = ListBasesZ.parse(res.data)
-				return new Ok(data)
+				return ListBasesZ.safeParse(res.data)
 			} catch (error) {
 				return catchErrors(error)
 			}
@@ -65,8 +60,7 @@ export default class ZodAirTableMeta {
 						"Content-Type": "application/json",
 					},
 				})
-				const data = BaseZ.parse(res.data)
-				return new Ok(data)
+				return BaseZ.safeParse(res.data)
 			} catch (error) {
 				return catchErrors(error)
 			}
@@ -88,8 +82,7 @@ export default class ZodAirTableMeta {
 						Authorization: `Bearer ${this.apiKey}`,
 					},
 				})
-				const data = z.array(TableZ).parse(res.data)
-				return new Ok(data)
+				return z.array(TableZ).safeParse(res.data)
 			} catch (error) {
 				return catchErrors(error)
 			}
@@ -100,17 +93,20 @@ export default class ZodAirTableMeta {
 		.args(baseIdZ)
 		.implement(async (baseId) => {
 			try {
-				const tables = await this.getNameIdObjects(baseId)
+				const results = await this.getNameIdObjects(baseId)
 
-				const tableNameIds = tables.reduce((acc, table) => {
-					return {
-						...acc,
-						[table.tableName]: table.tableId,
-					}
-				}, {})
+				if (!results.success) {
+					return results
+				} else {
+					const tableNameIds = results.data.reduce((acc, table) => {
+						return {
+							...acc,
+							[table.tableName]: table.tableId,
+						}
+					}, {})
 
-				const data = z.record(z.string()).parse(tableNameIds)
-				return new Ok(data)
+					return z.record(z.string()).safeParse(tableNameIds)
+				}
 			} catch (error) {
 				return catchErrors(error)
 			}
@@ -121,12 +117,16 @@ export default class ZodAirTableMeta {
 		.args(baseIdZ)
 		.implement(async (baseId) => {
 			try {
-				const tables = await this.getNameIdObjects(baseId)
+				const results = await this.getNameIdObjects(baseId)
 
-				const fieldNameIds = tables.map((table) => table.fields)
-
-				const data = z.array(z.record(z.string())).parse(fieldNameIds)
-				return new Ok(data)
+				if (!results.success) {
+					return results
+				} else {
+					return {
+						...results,
+						data: results.data.map((table) => table.fields),
+					}
+				}
 			} catch (error) {
 				return catchErrors(error)
 			}
@@ -141,13 +141,19 @@ export default class ZodAirTableMeta {
 		.args(baseIdZ)
 		.implement(async (baseId) => {
 			try {
-				const tablesEnums = await this.getNameIdObjects(baseId)
+				const results = await this.getNameIdObjects(baseId)
 
-				// Generate the field Enums per Table
-				const data = tablesEnums.map((table) => {
-					return writeFieldIdEnum(table)
-				})
-				return new Ok(data)
+				if (!results.success) {
+					return results
+				} else {
+					// Generate the field Enums per Table
+					return {
+						...results,
+						data: results.data.map((table) => {
+							return writeFieldIdEnum(table)
+						}),
+					}
+				}
 			} catch (error) {
 				return catchErrors(error)
 			}
@@ -158,10 +164,16 @@ export default class ZodAirTableMeta {
 		.args(z.string(), baseIdZ)
 		.implement(async (baseName, baseId) => {
 			try {
-				const tablesEnums = await this.getNameIdObjects(baseId)
-				// Generate the Table Enum
-				const data = writeTablesIdEnum(baseName, tablesEnums)
-				return new Ok(data)
+				const results = await this.getNameIdObjects(baseId)
+
+				if (!results.success) {
+					return results
+				} else {
+					return {
+						...results,
+						data: writeTablesIdEnum(baseName, results.data),
+					}
+				}
 			} catch (error) {
 				return catchErrors(error)
 			}
@@ -189,18 +201,28 @@ export default class ZodAirTableMeta {
 			})
 
 			// Parse the response so we have static types
-			const tables = z.array(TableZ).parse(res.data)
+			const tables = z.array(TableZ).safeParse(res.data)
 
-			// Generate the enum as a Record
-			return tables.map((table) => {
+			if (!tables.success) {
+				return tables
+			} else {
+				// Generate the enum as a Record
 				return {
-					tableName: table.name,
-					tableId: table.id,
-					fields: table.fields.reduce<Record<string, string>>((acc, field) => {
-						acc[field.name] = field.id
-						return acc
-					}, {}),
+					...tables,
+					data: tables.data.map((table) => {
+						return {
+							tableName: table.name,
+							tableId: table.id,
+							fields: table.fields.reduce<Record<string, string>>(
+								(acc, field) => {
+									acc[field.name] = field.id
+									return acc
+								},
+								{}
+							),
+						}
+					}),
 				}
-			})
+			}
 		})
 }
