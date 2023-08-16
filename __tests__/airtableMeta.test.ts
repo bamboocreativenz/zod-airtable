@@ -1,3 +1,4 @@
+import { isNativeError } from "util/types"
 import { ZodAirTableMeta } from "../src"
 import { env } from "../src/env"
 
@@ -7,9 +8,13 @@ describe("airtableMeta", () => {
 
 		const uut = await zair.listBases({})
 
-		expect(uut.ok).toBeTruthy()
-		if (uut.ok) {
-			expect(uut.val).toHaveProperty("bases")
+		if (isNativeError(uut)) {
+			throw uut
+		} else if (!uut.success) {
+			throw new Error(uut.error.message)
+		} else {
+			expect(uut.success).toBeTruthy()
+			expect(uut.data).toHaveProperty("bases")
 		}
 	})
 })
