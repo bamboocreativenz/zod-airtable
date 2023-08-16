@@ -9,8 +9,6 @@ import {
 } from "./utils/writeFieldIdEnum.ts"
 import catchErrors from "./utils/catchErrors.ts"
 
-//TODO work out how we handle errors in this repo?
-
 export default class ZodAirTableMeta {
 	private apiKey: string
 	/**
