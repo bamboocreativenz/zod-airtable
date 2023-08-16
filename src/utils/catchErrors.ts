@@ -1,3 +1,5 @@
+import { Err } from "ts-results-es"
+
 export default function catchErrors(err: unknown | Error | string) {
 	// Dev logging
 	if (process.env.NODE_ENV !== "production") {
@@ -5,10 +7,10 @@ export default function catchErrors(err: unknown | Error | string) {
 	}
 
 	if (typeof err === "string") {
-		return new Error(err)
+		return new Err(err)
 	} else if (err instanceof Error) {
-		throw err
+		return new Err(err)
 	} else {
-		return new Error(JSON.stringify(err))
+		return new Err(new Error(JSON.stringify(err)))
 	}
 }
