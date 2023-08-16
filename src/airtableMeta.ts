@@ -1,5 +1,4 @@
 import { z } from "zod"
-import axios from "axios"
 import { Ok, Err } from "ts-results-es"
 
 import { BaseZ, CreateBaseZ, ListBasesZ, TableZ } from "./types/airtableBase.ts"
@@ -9,8 +8,6 @@ import {
 	writeTablesIdEnum,
 } from "./utils/writeFieldIdEnum.ts"
 import catchErrors from "./utils/catchErrors.ts"
-import { FieldSet } from "airtable"
-import { FieldT } from "./types/airtableFields"
 
 //TODO work out how we handle errors in this repo - ie throw yes/no and/or register with sentry?
 
@@ -35,15 +32,21 @@ export default class ZodAirTableMeta {
 		.args(z.object({ offset: z.number().optional() }))
 		.implement(async ({ offset }) => {
 			try {
+				// Fetch the data
 				const url = offset
 					? `https://api.airtable.com/v0/meta/bases?offset=${offset}`
 					: `https://api.airtable.com/v0/meta/bases`
-				const res = await axios.get(url, {
+				const res = await fetch(url, {
 					headers: {
 						Authorization: `Bearer ${this.apiKey}`,
 					},
 				})
-				const results = ListBasesZ.safeParse(res.data)
+				const data = await res.json()
+
+				// Parse the results
+				const results = ListBasesZ.safeParse(data)
+
+				// Return wrapped in ts-results
 				if (!results.success) {
 					return new Err(results.error.issues)
 				} else {
@@ -64,14 +67,22 @@ export default class ZodAirTableMeta {
 		.args(CreateBaseZ)
 		.implement(async (baseSchema) => {
 			try {
+				// Send the data
 				const url = `https://api.airtable.com/v0/meta/bases`
-				const res = await axios.post(url, baseSchema, {
+				const res = await fetch(url, {
+					method: "POST",
 					headers: {
 						Authorization: `Bearer ${this.apiKey}`,
 						"Content-Type": "application/json",
 					},
+					body: JSON.stringify(baseSchema),
 				})
-				const results = BaseZ.safeParse(res.data)
+				const data = await res.json()
+
+				// Parse the results
+				const results = BaseZ.safeParse(data)
+
+				// Return wrapped in ts-results
 				if (!results.success) {
 					return new Err(results.error.issues)
 				} else {
@@ -92,13 +103,19 @@ export default class ZodAirTableMeta {
 		.args(baseIdZ)
 		.implement(async (baseId) => {
 			try {
+				// Fetch the data
 				const url = `https://api.airtable.com/v0/meta/bases/${baseId}/tables`
-				const res = await axios.get(url, {
+				const res = await fetch(url, {
 					headers: {
 						Authorization: `Bearer ${this.apiKey}`,
 					},
 				})
-				const results = z.array(TableZ).safeParse(res.data)
+				const data = await res.json()
+
+				// Parse the results
+				const results = z.array(TableZ).safeParse(data)
+
+				// Return wrapped in ts-results
 				if (!results.success) {
 					return new Err(results.error.issues)
 				} else {
@@ -114,11 +131,13 @@ export default class ZodAirTableMeta {
 		.args(baseIdZ)
 		.implement(async (baseId) => {
 			try {
+				// Fetch the data
 				const results = await this.getNameIdObjects(baseId)
 
 				if (!results.ok) {
 					return results
 				} else {
+					// Reduce the data into a map of tableNames and tableIds
 					const tableNameIds = results.val.reduce((acc, table) => {
 						return {
 							...acc,
@@ -126,7 +145,10 @@ export default class ZodAirTableMeta {
 						}
 					}, {})
 
+					// Parse the results
 					const data = z.record(z.string()).safeParse(tableNameIds)
+
+					// Return wrapped in ts-results
 					if (!data.success) {
 						return new Err(data.error.issues)
 					} else {
@@ -143,12 +165,16 @@ export default class ZodAirTableMeta {
 		.args(baseIdZ)
 		.implement(async (baseId) => {
 			try {
+				// Fetch the data
 				const results = await this.getNameIdObjects(baseId)
 
 				if (!results.ok) {
 					return results
 				} else {
+					// Flatten the tables into an array of fields
 					const data = results.val.map((table) => table.fields)
+
+					// Return wrapped in ts-results
 					return new Ok(data)
 				}
 			} catch (error) {
@@ -165,15 +191,18 @@ export default class ZodAirTableMeta {
 		.args(baseIdZ)
 		.implement(async (baseId) => {
 			try {
+				// Fetch the data
 				const results = await this.getNameIdObjects(baseId)
 
 				if (!results.ok) {
 					return results
 				} else {
-					// Generate the field Enums per Table
+					// Map the fields to an array of ts-enum strings
 					const data = results.val.map((table) => {
 						return writeFieldIdEnum(table)
 					})
+
+					// Return wrapped in ts-results
 					return new Ok(data)
 				}
 			} catch (error) {
@@ -186,12 +215,16 @@ export default class ZodAirTableMeta {
 		.args(z.string(), baseIdZ)
 		.implement(async (baseName, baseId) => {
 			try {
+				// Fetch the data
 				const results = await this.getNameIdObjects(baseId)
+
 				if (!results.ok) {
 					return results
 				} else {
-					// Generate the Table Enum
+					// Map the tables to an array of ts-enum strings
 					const data = writeTablesIdEnum(baseName, results.val)
+
+					// Return wrapped in ts-results
 					return new Ok(data)
 				}
 			} catch (error) {
@@ -214,14 +247,15 @@ export default class ZodAirTableMeta {
 		.args(baseIdZ)
 		.implement(async (baseId) => {
 			const url = `https://api.airtable.com/v0/meta/bases/${baseId}/tables`
-			const res = await axios.get(url, {
+			const res = await fetch(url, {
 				headers: {
 					Authorization: `Bearer ${this.apiKey}`,
 				},
 			})
+			const data = await res.json()
 
 			// Parse the response so we have static types
-			const results = z.array(TableZ).safeParse(res.data)
+			const results = z.array(TableZ).safeParse(data)
 
 			if (!results.success) {
 				return new Err(results.error.issues)
