@@ -1,5 +1,4 @@
 import { z } from "zod"
-import axios from "axios"
 
 export default class ZodAirTableWebhooks {
 	private apiKey: string
@@ -16,11 +15,12 @@ export default class ZodAirTableWebhooks {
 		.args(z.string())
 		.implement(async (offset) => {
 			const url = "https://api.airtable.com/v0/bases/{baseId}/webhooks"
-			const res = await axios.get(url, {
+			const res = await fetch(url, {
 				headers: {
 					Authorization: `Bearer ${this.apiKey}`,
 				},
 			})
-			return res.data
+			//TODO add zod validation
+			return await res.json()
 		})
 }
