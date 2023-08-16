@@ -1,6 +1,6 @@
 import AirtableSDK, { FieldSet } from "airtable"
 import { z } from "zod"
-import { SelectQueryParamsT, zSelectQueryParams } from "./types/queryParams"
+import { SelectQueryParamsZ } from "./types/queryParams"
 import { FieldT } from "./types/airtableFields"
 
 /**
@@ -45,9 +45,15 @@ export default class ZodAirTable<
 	 * @param query Optional query params inculding filterByFormula, maxRecords, etc
 	 * @returns Array of validated records
 	 */
-	public async listAllRecords(query: SelectQueryParamsT = {}) {
+	public async listAllRecords = z
+	.function()
+	.args(z.object({
+		query: SelectQueryParamsZ,
+		fieldEnum: z.string().optional(),
+	}))
+	.implement(({query, fieldEnum}) => {
 		const data = await this.table
-			.select(zSelectQueryParams.parse(query))
+			.select(query)
 			.all()
 			.then((records) => {
 				return records.map((r) => {
@@ -59,7 +65,6 @@ export default class ZodAirTable<
 			})
 		const result = this.listSchema.safeParse(data)
 		if (!result.success) {
-			// TODO log error with sentry and generate slack notification
 			// TODO Consider separating out the failing records and returning 2 arrays. One of data that succeeded and one that didn't
 			// TODO We should make the function capable of operating in different modes. eg filter out bad records, 2 array mode above, throw mode or return result
 			throw new Error(result.error.message)
