@@ -17,7 +17,8 @@
 		"sourceMap": true,
 		"strict": true,
 		"allowImportingTsExtensions": true,
-		"target": "ES2021"
+		"target": "ES2021",
+		"noErrorTruncation": true
 	},
 	"include": ["**/*.ts"],
 	"exclude": ["node_modules"]
