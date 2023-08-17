@@ -7,7 +7,8 @@ import {
 	writeFieldIdEnum,
 	writeTablesIdEnum,
 } from "./utils/writeFieldIdEnum.ts"
-import catchErrors from "./utils/catchErrors.ts"
+import getError from "./utils/getError"
+import { ErrorType } from "../errorTypes"
 
 export default class ZodAirTableMeta {
 	private apiKey: string
@@ -46,12 +47,12 @@ export default class ZodAirTableMeta {
 
 				// Return wrapped in ts-results
 				if (!results.success) {
-					return new Err(results.error.issues)
+					return getError(ErrorType.ValidationError, data.error)
 				} else {
 					return new Ok(results.data)
 				}
 			} catch (error) {
-				return catchErrors(error)
+				return getError(ErrorType.APIError, error)
 			}
 		})
 
@@ -82,12 +83,12 @@ export default class ZodAirTableMeta {
 
 				// Return wrapped in ts-results
 				if (!results.success) {
-					return new Err(results.error.issues)
+					return getError(ErrorType.ValidationError, data.error)
 				} else {
 					return new Ok(results.data)
 				}
 			} catch (error) {
-				return catchErrors(error)
+				return getError(ErrorType.APIError, error)
 			}
 		})
 
@@ -115,12 +116,12 @@ export default class ZodAirTableMeta {
 
 				// Return wrapped in ts-results
 				if (!results.success) {
-					return new Err(results.error.issues)
+					return getError(ErrorType.ValidationError, data.error)
 				} else {
 					return new Ok(results.data)
 				}
 			} catch (error) {
-				return catchErrors(error)
+				return getError(ErrorType.APIError, error)
 			}
 		})
 
@@ -148,13 +149,13 @@ export default class ZodAirTableMeta {
 
 					// Return wrapped in ts-results
 					if (!data.success) {
-						return new Err(data.error.issues)
+						return getError(ErrorType.ValidationError, data.error)
 					} else {
 						return new Ok(data.data)
 					}
 				}
 			} catch (error) {
-				return catchErrors(error)
+				return getError(ErrorType.APIError, error)
 			}
 		})
 
@@ -162,21 +163,17 @@ export default class ZodAirTableMeta {
 		.function()
 		.args(baseIdZ)
 		.implement(async (baseId) => {
-			try {
-				// Fetch the data
-				const results = await this.getNameIdObjects(baseId)
+			// Fetch the data
+			const results = await this.getNameIdObjects(baseId)
 
-				if (!results.ok) {
-					return results
-				} else {
-					// Flatten the tables into an array of fields
-					const data = results.val.map((table) => table.fields)
+			if (!results.ok) {
+				return results
+			} else {
+				// Flatten the tables into an array of fields
+				const data = results.val.map((table) => table.fields)
 
-					// Return wrapped in ts-results
-					return new Ok(data)
-				}
-			} catch (error) {
-				return catchErrors(error)
+				// Return wrapped in ts-results
+				return new Ok(data)
 			}
 		})
 
@@ -188,23 +185,19 @@ export default class ZodAirTableMeta {
 		.function()
 		.args(baseIdZ)
 		.implement(async (baseId) => {
-			try {
-				// Fetch the data
-				const results = await this.getNameIdObjects(baseId)
+			// Fetch the data
+			const results = await this.getNameIdObjects(baseId)
 
-				if (!results.ok) {
-					return results
-				} else {
-					// Map the fields to an array of ts-enum strings
-					const data = results.val.map((table) => {
-						return writeFieldIdEnum(table)
-					})
+			if (!results.ok) {
+				return results
+			} else {
+				// Map the fields to an array of ts-enum strings
+				const data = results.val.map((table) => {
+					return writeFieldIdEnum(table)
+				})
 
-					// Return wrapped in ts-results
-					return new Ok(data)
-				}
-			} catch (error) {
-				return catchErrors(error)
+				// Return wrapped in ts-results
+				return new Ok(data)
 			}
 		})
 
@@ -212,21 +205,17 @@ export default class ZodAirTableMeta {
 		.function()
 		.args(z.string(), baseIdZ)
 		.implement(async (baseName, baseId) => {
-			try {
-				// Fetch the data
-				const results = await this.getNameIdObjects(baseId)
+			// Fetch the data
+			const results = await this.getNameIdObjects(baseId)
 
-				if (!results.ok) {
-					return results
-				} else {
-					// Map the tables to an array of ts-enum strings
-					const data = writeTablesIdEnum(baseName, results.val)
+			if (!results.ok) {
+				return results
+			} else {
+				// Map the tables to an array of ts-enum strings
+				const data = writeTablesIdEnum(baseName, results.val)
 
-					// Return wrapped in ts-results
-					return new Ok(data)
-				}
-			} catch (error) {
-				return catchErrors(error)
+				// Return wrapped in ts-results
+				return new Ok(data)
 			}
 		})
 
@@ -244,35 +233,39 @@ export default class ZodAirTableMeta {
 		.function()
 		.args(baseIdZ)
 		.implement(async (baseId) => {
-			const url = `https://api.airtable.com/v0/meta/bases/${baseId}/tables`
-			const res = await fetch(url, {
-				headers: {
-					Authorization: `Bearer ${this.apiKey}`,
-				},
-			})
-			const data = await res.json()
-
-			// Parse the response so we have static types
-			const results = z.array(TableZ).safeParse(data)
-
-			if (!results.success) {
-				return new Err(results.error.issues)
-			} else {
-				// Generate the enum as a Record
-				const data = results.data.map((table) => {
-					return {
-						tableName: table.name,
-						tableId: table.id,
-						fields: table.fields.reduce<Record<string, string>>(
-							(acc, field) => {
-								acc[field.name] = field.id
-								return acc
-							},
-							{}
-						),
-					}
+			try {
+				const url = `https://api.airtable.com/v0/meta/bases/${baseId}/tables`
+				const res = await fetch(url, {
+					headers: {
+						Authorization: `Bearer ${this.apiKey}`,
+					},
 				})
-				return new Ok(data)
+				const data = await res.json()
+
+				// Parse the response so we have static types
+				const results = z.array(TableZ).safeParse(data)
+
+				if (!results.success) {
+					return getError(ErrorType.ValidationError, data.error)
+				} else {
+					// Generate the enum as a Record
+					const data = results.data.map((table) => {
+						return {
+							tableName: table.name,
+							tableId: table.id,
+							fields: table.fields.reduce<Record<string, string>>(
+								(acc, field) => {
+									acc[field.name] = field.id
+									return acc
+								},
+								{}
+							),
+						}
+					})
+					return new Ok(data)
+				}
+			} catch (error) {
+				return getError(ErrorType.APIError, error)
 			}
 		})
 }
