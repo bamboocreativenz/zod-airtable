@@ -7,19 +7,21 @@ import { z } from "zod"
  * }
  */
 
-const CollaboratorZ = z.object({
+export const CollaboratorZ = z.object({
 	id: z.string(),
 	email: z.string(),
 	name: z.string(),
 })
+export type CollaboratorT = z.infer<typeof CollaboratorZ>
 
-const ThumbnailZ = z.object({
+export const ThumbnailZ = z.object({
 	url: z.string().url(),
 	width: z.number(),
 	height: z.number(),
 })
+export type ThumbnailT = z.infer<typeof ThumbnailZ>
 
-const AttatchementZ = z.object({
+export const AttatchementZ = z.object({
 	id: z.string(),
 	url: z.string().url(),
 	filename: z.string(),
@@ -32,6 +34,7 @@ const AttatchementZ = z.object({
 		full: ThumbnailZ,
 	}),
 })
+export type AttatchementT = z.infer<typeof AttatchementZ>
 
 export const FieldZ = z.union([
 	z.string(),
@@ -42,44 +45,7 @@ export const FieldZ = z.union([
 	z.array(z.string()),
 	z.array(AttatchementZ),
 ])
+export type FieldT = z.infer<typeof FieldZ>
+
 export const FieldSetZ = z.record(FieldZ)
-
-type CollaboratorT = {
-	id: string
-	email: string
-	name: string
-}
-
-type ThumbnailT = {
-	url: string
-	width: string
-	height: string
-}
-
-type AttatchmentT = {
-	id: string
-	url: string
-	filename: string
-	size: number
-	type: string
-	thumbnails: {
-		small: ThumbnailT
-		large: ThumbnailT
-		full: ThumbnailT
-	}
-}
-
-export type FieldT =
-	| undefined
-	| string
-	| number
-	| boolean
-	| Array<string>
-	| Array<{
-			id: string
-			email: string
-			name: string
-	  }>
-	| Array<AttatchmentT>
-	| CollaboratorT
-	| Array<CollaboratorT>
+export type FieldSetT = z.infer<typeof FieldSetZ>
