@@ -99,14 +99,16 @@ export default class ZodAirTable<
 			if (!response.ok) {
 				return response
 			} else {
-				return new Ok(await Promise.all(
-					response.val.map(async (r) => {
-						const parsed = this.airtableSchema.safeParse(r)
-						if (!parsed.success) {
-							return getError(ErrorType.ValidationError, parsed.error)
-						}
-						return new Ok(parsed.data)
-					})
+				return new Ok(
+					await Promise.all(
+						response.val.map(async (r) => {
+							const parsed = this.airtableSchema.safeParse(r)
+							if (!parsed.success) {
+								return getError(ErrorType.ValidationError, parsed.error)
+							}
+							return new Ok(parsed.data)
+						})
+					)
 				)
 			}
 		})
