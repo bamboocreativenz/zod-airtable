@@ -55,7 +55,7 @@ export default class ZodAirTable<
 	}
 
 	/**
-	 * @function getAllRecords returns all records in the table
+	 * @function listAllRecords returns all records in the table
 	 * @param query Optional query params inculding filterByFormula, maxRecords, etc
 	 * @param fieldIdMap is an hash map of field names and ids that can be used when
 	 * @returns Array of result wrapped records, both valid and not
@@ -96,20 +96,80 @@ export default class ZodAirTable<
 					return getError(ErrorType.APIError, err)
 				})
 
-			if (!response.ok) {
-				return response
-			} else {
-				return new Ok(
-					await Promise.all(
-						response.val.map(async (r) => {
-							const parsed = this.airtableSchema.safeParse(r)
-							if (!parsed.success) {
-								return getError(ErrorType.ValidationError, parsed.error)
-							}
-							return new Ok(parsed.data)
-						})
-					)
+			if (!response.ok) return response
+
+			return new Ok(
+				await Promise.all(
+					response.val.map(async (r) => {
+						const parsed = this.airtableSchema.safeParse(r)
+						if (!parsed.success) {
+							return getError(ErrorType.ValidationError, parsed.error)
+						}
+						return new Ok(parsed.data)
+					})
 				)
-			}
+			)
+		})
+
+	/**
+	 * @function getRecords fetches records based on an array of ids
+	 * @param recordIds Array of ids to fetch
+	 * @param query Optional query params inculding filterByFormula, maxRecords, etc
+	 * @param fieldIdMap is an hash map of field names and ids that can be used when
+	 * @returns Array of result wrapped records, both valid and not
+	 */
+	public getRecords = z
+		.function()
+		.args(
+			z.object({
+				recordIds: z.array(z.string()),
+				query: SelectQueryParamsZ.optional(),
+				fieldIdMap: z.record(z.string()).optional(),
+			})
+		)
+		.implement(async ({ recordIds, query, fieldIdMap }) => {
+			const result = await Promise.allSettled(
+				recordIds.map(async (recordId) => {
+					return await this.table.find(recordId)
+				})
+			)
+
+			const resultMap = result.map((r) => {
+				if (r.status === "fulfilled") {
+					return new Ok(r.value)
+				} else {
+					return getError(ErrorType.APIError, r.reason)
+				}
+			})
+
+			const mapFieldIds = resultMap.map((result) => {
+				if (
+					result.ok &&
+					fieldIdMap != undefined &&
+					query?.returnFieldsByFieldId === true
+				) {
+					const record = result.val
+					return new Ok({
+						...record,
+						fields: renameObjectProps({
+							data: record.fields,
+							map: fieldIdMap,
+						}),
+					})
+				}
+				return result
+			})
+
+			return await Promise.all(
+				mapFieldIds.map(async (record) => {
+					if (!record.ok) return record
+
+					const parsed = this.airtableSchema.safeParse(record)
+					if (!parsed.success) {
+						return getError(ErrorType.ValidationError, parsed.error)
+					}
+					return new Ok(parsed.data)
+				})
+			)
 		})
 }
