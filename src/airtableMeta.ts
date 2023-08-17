@@ -7,8 +7,8 @@ import {
 	writeFieldIdEnum,
 	writeTablesIdEnum,
 } from "./utils/writeFieldIdEnum.ts"
-import getError from "./utils/getError"
-import { ErrorType } from "../errorTypes"
+import getError, { getIntegrationError } from "./utils/getError"
+import { ErrorType, IntegrationErrorType } from "../errorTypes"
 
 export default class ZodAirTableMeta {
 	private apiKey: string
@@ -52,7 +52,7 @@ export default class ZodAirTableMeta {
 					return new Ok(result.data)
 				}
 			} catch (error) {
-				return getError(ErrorType.APIError, error)
+				return getIntegrationError(IntegrationErrorType.APIError, error)
 			}
 		})
 
@@ -88,7 +88,7 @@ export default class ZodAirTableMeta {
 					return new Ok(result.data)
 				}
 			} catch (error) {
-				return getError(ErrorType.APIError, error)
+				return getIntegrationError(IntegrationErrorType.APIError, error)
 			}
 		})
 
@@ -121,7 +121,7 @@ export default class ZodAirTableMeta {
 					return new Ok(result.data)
 				}
 			} catch (error) {
-				return getError(ErrorType.APIError, error)
+				return getIntegrationError(IntegrationErrorType.APIError, error)
 			}
 		})
 
@@ -155,7 +155,7 @@ export default class ZodAirTableMeta {
 					}
 				}
 			} catch (error) {
-				return getError(ErrorType.APIError, error)
+				return getIntegrationError(IntegrationErrorType.APIError, error)
 			}
 		})
 
@@ -265,7 +265,7 @@ export default class ZodAirTableMeta {
 					return new Ok(data)
 				}
 			} catch (error) {
-				return getError(ErrorType.APIError, error)
+				return getIntegrationError(IntegrationErrorType.APIError, error)
 			}
 		})
 }

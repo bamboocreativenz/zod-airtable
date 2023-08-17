@@ -3,8 +3,8 @@ import { z } from "zod"
 import { SelectQueryParamsZ } from "./types/queryParams"
 import { FieldT } from "./types/airtableFields"
 import { Ok } from "ts-results-es"
-import getError from "./utils/getError"
-import { ErrorType } from "../errorTypes"
+import getError, { getIntegrationError } from "./utils/getError"
+import { ErrorType, IntegrationErrorType } from "../errorTypes"
 import renameObjectProps from "./utils/renameObjectProperties"
 
 /**
@@ -93,7 +93,7 @@ export default class ZodAirTable<
 					return new Ok(records)
 				})
 				.catch((err) => {
-					return getError(ErrorType.APIError, err)
+					return getIntegrationError(IntegrationErrorType.APIError, err)
 				})
 
 			if (!response.ok) return response
@@ -138,7 +138,7 @@ export default class ZodAirTable<
 				if (r.status === "fulfilled") {
 					return new Ok(r.value)
 				} else {
-					return getError(ErrorType.APIError, r.reason)
+					return getIntegrationError(IntegrationErrorType.APIError, r.reason)
 				}
 			})
 
