@@ -57,7 +57,7 @@ export default class ZodAirTable<
 	/**
 	 * @function getAllRecords returns all records in the table
 	 * @param query Optional query params inculding filterByFormula, maxRecords, etc
-	 * @param fieldEnum is an hash of field names and ids that can be used when
+	 * @param fieldIdMap is an hash map of field names and ids that can be used when
 	 * @returns Array of result wrapped records, both valid and not
 	 */
 	public listAllRecords = z
@@ -65,23 +65,26 @@ export default class ZodAirTable<
 		.args(
 			z.object({
 				query: SelectQueryParamsZ.optional(),
-				fieldEnum: z.record(z.string()).optional(),
+				fieldIdMap: z.record(z.string()).optional(),
 			})
 		)
-		.implement(async ({ query, fieldEnum }) => {
+		.implement(async ({ query, fieldIdMap }) => {
 			const response = await this.table
 				.select(query)
 				.all()
 				.then((records) => {
 					// DL: DX question here, would it be nicer if we had the returnFieldsByFieldId as a class property that we inject into the query?
-					if (fieldEnum != undefined && query?.returnFieldsByFieldId === true) {
+					if (
+						fieldIdMap != undefined &&
+						query?.returnFieldsByFieldId === true
+					) {
 						return new Ok(
 							records.map((record) => {
 								return {
 									...record,
 									fields: renameObjectProps({
 										data: record.fields,
-										map: fieldEnum,
+										map: fieldIdMap,
 									}),
 								}
 							})
