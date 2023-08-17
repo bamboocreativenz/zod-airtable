@@ -1,8 +1,6 @@
 import { z } from "zod"
 import { ZodAirTable } from "../src"
 import { env } from "../src/env.ts"
-import { FieldSet } from "airtable"
-import { OkImpl } from "ts-results-es"
 
 describe("Airtable", () => {
 	test("can listRecords", async () => {

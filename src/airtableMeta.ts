@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { Ok, Err } from "ts-results-es"
+import { Ok } from "ts-results-es"
 
 import { BaseZ, CreateBaseZ, ListBasesZ, TableZ } from "./types/airtableBase.ts"
 import { baseIdZ } from "./types/airtableIds.ts"
