@@ -73,6 +73,7 @@ export default class ZodAirTable<
 				.select(query)
 				.all()
 				.then((records) => {
+					// DL: DX question here, would it be nicer if we had the returnFieldsByFieldId as a class property that we inject into the query?
 					if (fieldEnum != undefined && query?.returnFieldsByFieldId === true) {
 						return new Ok(
 							records.map((record) => {
