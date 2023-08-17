@@ -11,7 +11,7 @@ export default function getError(
 			console.error({ error: error.message, issues: error.issues })
 		}
 
-		return new Err({ errorType, error: error.issues })
+		return new Err({ errorType, error: error.message })
 	} else if (typeof error === "string") {
 		if (process.env.NODE_ENV !== "production") {
 			console.error({ error })
