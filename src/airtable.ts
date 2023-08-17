@@ -2,6 +2,10 @@ import AirtableSDK, { FieldSet } from "airtable"
 import { z } from "zod"
 import { SelectQueryParamsZ } from "./types/queryParams"
 import { FieldT } from "./types/airtableFields"
+import { Err, Ok } from "ts-results-es"
+import getError from "./utils/getError"
+import { ErrorType } from "../errorTypes"
+import renameObjectProps from "./utils/renameObjectProperties"
 
 /**
  * @class ZodAirTable
@@ -11,6 +15,11 @@ export default class ZodAirTable<
 > {
 	private table: AirtableSDK.Table<FieldSet>
 	private schema: T
+	private airtableSchema: z.ZodObject<{
+		id: z.ZodString
+		createdTime: z.ZodString
+		fields: T
+	}>
 	private listSchema: z.ZodArray<
 		z.ZodObject<{ id: z.ZodString; createdTime: z.ZodString; fields: T }>
 	>
@@ -31,6 +40,11 @@ export default class ZodAirTable<
 			.base(args.baseId)
 			.table(args.tableId)
 		this.schema = args.schema
+		this.airtableSchema = z.object({
+			id: z.string(),
+			createdTime: z.string(),
+			fields: args.schema,
+		})
 		this.listSchema = z.array(
 			z.object({
 				id: z.string(),
@@ -43,35 +57,53 @@ export default class ZodAirTable<
 	/**
 	 * @function getAllRecords returns all records in the table
 	 * @param query Optional query params inculding filterByFormula, maxRecords, etc
-	 * @returns Array of validated records
+	 * @param fieldEnum is an hash of field names and ids that can be used when
+	 * @returns Array of result wrapped records, both valid and not
 	 */
 	public listAllRecords = z
 		.function()
 		.args(
 			z.object({
-				query: SelectQueryParamsZ,
-				fieldEnum: z.string().optional(),
+				query: SelectQueryParamsZ.optional(),
+				fieldEnum: z.record(z.string()).optional(),
 			})
 		)
 		.implement(async ({ query, fieldEnum }) => {
-			const data = await this.table
+			const response = await this.table
 				.select(query)
 				.all()
 				.then((records) => {
-					return records.map((r) => {
-						return r
-					})
+					if (fieldEnum != undefined && query?.returnFieldsByFieldId === true) {
+						return new Ok(
+							records.map((record) => {
+								return {
+									...record,
+									fields: renameObjectProps({
+										data: record.fields,
+										map: fieldEnum,
+									}),
+								}
+							})
+						)
+					}
+					return new Ok(records)
 				})
 				.catch((err) => {
-					throw new Error(err)
+					return getError(ErrorType.APIError, err)
 				})
-			const result = this.listSchema.safeParse(data)
-			if (!result.success) {
-				// TODO Consider separating out the failing records and returning 2 arrays. One of data that succeeded and one that didn't
-				// TODO We should make the function capable of operating in different modes. eg filter out bad records, 2 array mode above, throw mode or return result
-				throw new Error(result.error.message)
+
+			if (!response.ok) {
+				return response
 			} else {
-				return result.data
+				return await Promise.all(
+					response.val.map(async (r) => {
+						const parsed = this.airtableSchema.safeParse(r)
+						if (!parsed.success) {
+							return getError(ErrorType.ValidationError, parsed.error)
+						}
+						return new Ok(parsed.data)
+					})
+				)
 			}
 		})
 }
