@@ -99,7 +99,7 @@ export default class ZodAirTable<
 			if (!response.ok) {
 				return response
 			} else {
-				return await Promise.all(
+				return new Ok(await Promise.all(
 					response.val.map(async (r) => {
 						const parsed = this.airtableSchema.safeParse(r)
 						if (!parsed.success) {
