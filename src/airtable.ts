@@ -1,77 +1,52 @@
-import AirtableSDK, { FieldSet } from "airtable"
-import { z } from "zod"
-import { SelectQueryParamsZ } from "./types/queryParams"
-import { FieldT } from "./types/airtableFields"
+// if the user wants a singleton to only have to get the api key once etc, then this returns curried functions
+// can also provide a default base id that is passed to all functions if a specific baseId is not provided
 
-/**
- * @class ZodAirTable
- */
-export default class ZodAirTable<
-	T extends z.ZodType<any, any, z.RecordType<string, FieldT>>
-> {
-	private table: AirtableSDK.Table<FieldSet>
-	private schema: T
-	private listSchema: z.ZodArray<
-		z.ZodObject<{ id: z.ZodString; createdTime: z.ZodString; fields: T }>
-	>
-	/**
-	 * @constructor
-	 * @param apiKey: Airtable Personal Access Token - https://airtable.com/create/tokens
-	 * @param baseId: Airtable base/appId
-	 * @param tableId: Table name or tableId
-	 * @param schema: zod object({}) schema for fields
-	 */
-	constructor(args: {
-		apiKey: string
-		baseId: string
-		tableId: string
-		schema: T
-	}) {
-		this.table = new AirtableSDK({ apiKey: args.apiKey })
-			.base(args.baseId)
-			.table(args.tableId)
-		this.schema = args.schema
-		this.listSchema = z.array(
-			z.object({
-				id: z.string(),
-				createdTime: z.string(),
-				fields: args.schema,
+import AirtableSDK from "airtable"
+
+import { getRecords, GetRecordsWithAirtable } from "./getRecords"
+import { SchemaZodT } from "./types/schema"
+
+interface ZodAirtable {
+	apiKey: string
+	defaultBaseId?: string
+}
+
+export default function zodAirtable ({
+	apiKey,
+	defaultBaseId
+}: ZodAirtable) {
+	const airtable = new AirtableSDK({ apiKey })
+
+	// TODO: auto-curry in TS? as airtable is provided
+	if (!defaultBaseId) {
+		return {
+			getRecords: <T extends SchemaZodT>({
+				tableId,
+				schema,
+				baseId,
+				query
+			}: Omit<GetRecordsWithAirtable<T>, 'airtable'>) => getRecords({
+				airtable,
+				tableId,
+				schema,
+				baseId,
+				query
 			})
-		)
+		}
+	} else {
+		return {
+			getRecords: <T extends SchemaZodT>({
+				tableId,
+				schema,
+				baseId,
+				query
+			}: Omit<GetRecordsWithAirtable<T>, 'airtable' | 'baseId'> & { baseId?: string }) => getRecords({
+				airtable,
+				tableId,
+				schema,
+				baseId: baseId || defaultBaseId,
+				query
+			})
+		}
 	}
-
-	/**
-	 * @function getAllRecords returns all records in the table
-	 * @param query Optional query params inculding filterByFormula, maxRecords, etc
-	 * @returns Array of validated records
-	 */
-	public listAllRecords = z
-		.function()
-		.args(
-			z.object({
-				query: SelectQueryParamsZ,
-				fieldEnum: z.string().optional(),
-			})
-		)
-		.implement(async ({ query, fieldEnum }) => {
-			const data = await this.table
-				.select(query)
-				.all()
-				.then((records) => {
-					return records.map((r) => {
-						return r
-					})
-				})
-				.catch((err) => {
-					throw new Error(err)
-				})
-			const result = this.listSchema.safeParse(data)
-			if (!result.success) {
-				// TODO Consider separating out the failing records and returning 2 arrays. One of data that succeeded and one that didn't
-				// TODO We should make the function capable of operating in different modes. eg filter out bad records, 2 array mode above, throw mode or return result
-				throw new Error(result.error.message)
-			} else {
-				return result.data
-			}
-		})
 }
