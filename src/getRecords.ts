@@ -8,6 +8,7 @@
 
 import AirtableSDK from "airtable"
 
+import { RecordZ } from "./types/record"
 import { SchemaZodT } from "./types/schema"
 import { SelectQueryParamsT } from "./types/queryParams"
 
@@ -39,12 +40,17 @@ export function getRecords<T extends SchemaZodT> ({
 		airtable = new AirtableSDK({ apiKey: otherArgs.apiKey })
 	}
 
+	// we overwrite the base RecordZ fields with the specific schema provided
+	const recordWithSchema = RecordZ.extend({
+		fields: schema
+	})
+
 	return airtable.base(baseId).table(tableId).select(query).all()
 	.then((records) => {
 		return Promise.all(
 			records.map((r) => {
 				// safeParseAsync in case of async refinements or transforms in schema, see https://zod.dev/?id=parseasync
-				return schema.safeParseAsync(r)
+				return recordWithSchema.safeParseAsync(r)
 			})
 		)
 	})

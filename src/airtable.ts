@@ -17,7 +17,7 @@ export default function zodAirtable ({
 }: ZodAirtable) {
 	const airtable = new AirtableSDK({ apiKey })
 
-	// TODO: auto-curry in TS? as airtable is provided
+	// TODO: auto-curry in TS?
 	if (!defaultBaseId) {
 		return {
 			getRecords: <T extends SchemaZodT>({

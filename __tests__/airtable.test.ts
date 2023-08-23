@@ -1,27 +1,72 @@
+import { describe, expect, test } from "vitest"
 import { z } from "zod"
-import { ZodAirTable } from "../src"
-import { env } from "../src/env.ts"
 
-describe("Airtable", () => {
-	test("can listRecords", async () => {
-		const table = new ZodAirTable({
-			apiKey: env.AIRTABLE_API_KEY,
-			baseId: "appGjiqxJsDA2rAp4",
-			tableId: "TestData",
-			schema: z.object({ name: z.string() }),
+import zodAirtable from "../src/airtable.ts"
+import { getRecords } from "../src/getRecords.ts"
+
+import { API_KEY, BASE_ID, TABLE_ID } from "./constants.ts"
+
+import mocks from "./mocks.ts"
+
+describe("zod-airtable", () => {
+	test("can getRecords with direct usage", async () => {
+		const expected = mocks.getRecordsMock.records.map(r => ({
+			success: true,
+			data: r
+		}))
+
+		const actual = await getRecords({
+			apiKey: API_KEY,
+			baseId: BASE_ID, 
+			tableId: TABLE_ID,
+			schema: z.object({
+				Name: z.string(),
+			})
 		})
 
-		const expected = [
-			{ name: "Test Testerson", Notes: "a test user", Status: "Done" },
-			{
-				name: "John Smith",
-				Notes: "a second test user",
-				Status: "In progress",
-			},
-		]
+		expect(actual).toEqual(expected)
+	})
 
-		const uut = await table.listAllRecords()
+	test("can getRecords with airtable singleton usage", async () => {
+		const expected = mocks.getRecordsMock.records.map(r => ({
+			success: true,
+			data: r
+		}))
 
-		expect(uut.map((r) => r.fields)).toEqual(expected)
+		const singleton = zodAirtable({
+			apiKey: API_KEY,
+		})
+
+		const actual = await singleton.getRecords({
+			baseId: BASE_ID, 
+			tableId: TABLE_ID,
+			schema: z.object({
+				Name: z.string(),
+			})
+		})
+
+		expect(actual).toEqual(expected)
+	})
+
+	test("can getRecords with airtable singleton usage and default base provided", async () => {
+		const expected = mocks.getRecordsMock.records.map(r => ({
+			success: true,
+			data: r
+		}))
+
+		const singleton = zodAirtable({
+			apiKey: API_KEY,
+			defaultBaseId: BASE_ID
+		})
+
+		// @ts-ignore: TODO fix type for when defaultBaseId is provided and thus baseId is not required	
+		const actual = await singleton.getRecords({
+			tableId: TABLE_ID,
+			schema: z.object({
+				Name: z.string(),
+			})
+		})
+
+		expect(actual).toEqual(expected)
 	})
 })
