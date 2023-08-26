@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { Ok, Err } from "ts-results-es"
+import { Ok } from "ts-results-es"
 
 import { BaseZ, CreateBaseZ, ListBasesZ, TableZ } from "./types/airtableBase.ts"
 import { baseIdZ } from "./types/airtableIds.ts"
@@ -7,7 +7,8 @@ import {
 	writeFieldIdEnum,
 	writeTablesIdEnum,
 } from "./utils/writeFieldIdEnum.ts"
-import catchErrors from "./utils/catchErrors.ts"
+import getError, { getIntegrationError } from "./utils/getError"
+import { ErrorType, IntegrationErrorType } from "../errorTypes"
 
 export default class ZodAirTableMeta {
 	private apiKey: string
@@ -39,19 +40,19 @@ export default class ZodAirTableMeta {
 						Authorization: `Bearer ${this.apiKey}`,
 					},
 				})
-				const data = await res.json()
+				const response = await res.json()
 
 				// Parse the results
-				const results = ListBasesZ.safeParse(data)
+				const result = ListBasesZ.safeParse(response)
 
 				// Return wrapped in ts-results
-				if (!results.success) {
-					return new Err(results.error.issues)
+				if (!result.success) {
+					return getError(ErrorType.ValidationError, result.error)
 				} else {
-					return new Ok(results.data)
+					return new Ok(result.data)
 				}
 			} catch (error) {
-				return catchErrors(error)
+				return getIntegrationError(IntegrationErrorType.APIError, error)
 			}
 		})
 
@@ -75,19 +76,19 @@ export default class ZodAirTableMeta {
 					},
 					body: JSON.stringify(baseSchema),
 				})
-				const data = await res.json()
+				const response = await res.json()
 
 				// Parse the results
-				const results = BaseZ.safeParse(data)
+				const result = BaseZ.safeParse(response)
 
 				// Return wrapped in ts-results
-				if (!results.success) {
-					return new Err(results.error.issues)
+				if (!result.success) {
+					return getError(ErrorType.ValidationError, result.error)
 				} else {
-					return new Ok(results.data)
+					return new Ok(result.data)
 				}
 			} catch (error) {
-				return catchErrors(error)
+				return getIntegrationError(IntegrationErrorType.APIError, error)
 			}
 		})
 
@@ -108,19 +109,19 @@ export default class ZodAirTableMeta {
 						Authorization: `Bearer ${this.apiKey}`,
 					},
 				})
-				const data = await res.json()
+				const response = await res.json()
 
-				// Parse the results
-				const results = z.array(TableZ).safeParse(data)
+				// Parse the result
+				const result = z.array(TableZ).safeParse(response)
 
 				// Return wrapped in ts-results
-				if (!results.success) {
-					return new Err(results.error.issues)
+				if (!result.success) {
+					return getError(ErrorType.ValidationError, result.error)
 				} else {
-					return new Ok(results.data)
+					return new Ok(result.data)
 				}
 			} catch (error) {
-				return catchErrors(error)
+				return getIntegrationError(IntegrationErrorType.APIError, error)
 			}
 		})
 
@@ -130,13 +131,13 @@ export default class ZodAirTableMeta {
 		.implement(async (baseId) => {
 			try {
 				// Fetch the data
-				const results = await this.getNameIdObjects(baseId)
+				const response = await this.getNameIdObjects(baseId)
 
-				if (!results.ok) {
-					return results
+				if (!response.ok) {
+					return response
 				} else {
 					// Reduce the data into a map of tableNames and tableIds
-					const tableNameIds = results.val.reduce((acc, table) => {
+					const tableNameIds = response.val.reduce((acc, table) => {
 						return {
 							...acc,
 							[table.tableName]: table.tableId,
@@ -144,17 +145,17 @@ export default class ZodAirTableMeta {
 					}, {})
 
 					// Parse the results
-					const data = z.record(z.string()).safeParse(tableNameIds)
+					const result = z.record(z.string()).safeParse(tableNameIds)
 
 					// Return wrapped in ts-results
-					if (!data.success) {
-						return new Err(data.error.issues)
+					if (!result.success) {
+						return getError(ErrorType.ValidationError, result.error)
 					} else {
-						return new Ok(data.data)
+						return new Ok(result.data)
 					}
 				}
 			} catch (error) {
-				return catchErrors(error)
+				return getIntegrationError(IntegrationErrorType.APIError, error)
 			}
 		})
 
@@ -162,21 +163,17 @@ export default class ZodAirTableMeta {
 		.function()
 		.args(baseIdZ)
 		.implement(async (baseId) => {
-			try {
-				// Fetch the data
-				const results = await this.getNameIdObjects(baseId)
+			// Fetch the data
+			const result = await this.getNameIdObjects(baseId)
 
-				if (!results.ok) {
-					return results
-				} else {
-					// Flatten the tables into an array of fields
-					const data = results.val.map((table) => table.fields)
+			if (!result.ok) {
+				return result
+			} else {
+				// Flatten the tables into an array of fields
+				const data = result.val.map((table) => table.fields)
 
-					// Return wrapped in ts-results
-					return new Ok(data)
-				}
-			} catch (error) {
-				return catchErrors(error)
+				// Return wrapped in ts-results
+				return new Ok(data)
 			}
 		})
 
@@ -188,23 +185,19 @@ export default class ZodAirTableMeta {
 		.function()
 		.args(baseIdZ)
 		.implement(async (baseId) => {
-			try {
-				// Fetch the data
-				const results = await this.getNameIdObjects(baseId)
+			// Fetch the data
+			const result = await this.getNameIdObjects(baseId)
 
-				if (!results.ok) {
-					return results
-				} else {
-					// Map the fields to an array of ts-enum strings
-					const data = results.val.map((table) => {
-						return writeFieldIdEnum(table)
-					})
+			if (!result.ok) {
+				return result
+			} else {
+				// Map the fields to an array of ts-enum strings
+				const data = result.val.map((table) => {
+					return writeFieldIdEnum(table)
+				})
 
-					// Return wrapped in ts-results
-					return new Ok(data)
-				}
-			} catch (error) {
-				return catchErrors(error)
+				// Return wrapped in ts-results
+				return new Ok(data)
 			}
 		})
 
@@ -212,21 +205,17 @@ export default class ZodAirTableMeta {
 		.function()
 		.args(z.string(), baseIdZ)
 		.implement(async (baseName, baseId) => {
-			try {
-				// Fetch the data
-				const results = await this.getNameIdObjects(baseId)
+			// Fetch the data
+			const result = await this.getNameIdObjects(baseId)
 
-				if (!results.ok) {
-					return results
-				} else {
-					// Map the tables to an array of ts-enum strings
-					const data = writeTablesIdEnum(baseName, results.val)
+			if (!result.ok) {
+				return result
+			} else {
+				// Map the tables to an array of ts-enum strings
+				const data = writeTablesIdEnum(baseName, result.val)
 
-					// Return wrapped in ts-results
-					return new Ok(data)
-				}
-			} catch (error) {
-				return catchErrors(error)
+				// Return wrapped in ts-results
+				return new Ok(data)
 			}
 		})
 
@@ -244,35 +233,39 @@ export default class ZodAirTableMeta {
 		.function()
 		.args(baseIdZ)
 		.implement(async (baseId) => {
-			const url = `https://api.airtable.com/v0/meta/bases/${baseId}/tables`
-			const res = await fetch(url, {
-				headers: {
-					Authorization: `Bearer ${this.apiKey}`,
-				},
-			})
-			const data = await res.json()
-
-			// Parse the response so we have static types
-			const results = z.array(TableZ).safeParse(data)
-
-			if (!results.success) {
-				return new Err(results.error.issues)
-			} else {
-				// Generate the enum as a Record
-				const data = results.data.map((table) => {
-					return {
-						tableName: table.name,
-						tableId: table.id,
-						fields: table.fields.reduce<Record<string, string>>(
-							(acc, field) => {
-								acc[field.name] = field.id
-								return acc
-							},
-							{}
-						),
-					}
+			try {
+				const url = `https://api.airtable.com/v0/meta/bases/${baseId}/tables`
+				const res = await fetch(url, {
+					headers: {
+						Authorization: `Bearer ${this.apiKey}`,
+					},
 				})
-				return new Ok(data)
+				const response = await res.json()
+
+				// Parse the response so we have static types
+				const result = z.array(TableZ).safeParse(response)
+
+				if (!result.success) {
+					return getError(ErrorType.ValidationError, result.error)
+				} else {
+					// Generate the enum as a Record
+					const data = result.data.map((table) => {
+						return {
+							tableName: table.name,
+							tableId: table.id,
+							fields: table.fields.reduce<Record<string, string>>(
+								(acc, field) => {
+									acc[field.name] = field.id
+									return acc
+								},
+								{}
+							),
+						}
+					})
+					return new Ok(data)
+				}
+			} catch (error) {
+				return getIntegrationError(IntegrationErrorType.APIError, error)
 			}
 		})
 }
