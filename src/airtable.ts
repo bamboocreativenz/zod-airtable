@@ -24,13 +24,13 @@ export default function zodAirtable<T extends SchemaZodT>({
 	const airtable = new AirtableSDK({ apiKey })
 
 	return {
-		getRecords: (query?: SelectQueryParamsT) =>
+		getRecords: (args?: { query: SelectQueryParamsT }) =>
 			getRecords({
 				airtable,
 				tableId: defaultTableId,
 				schema: defaultSchema,
 				baseId: defaultBaseId,
-				query,
+				query: args?.query,
 			}),
 		getRecordsById: ({ recordIds }: { recordIds: Array<string> }) =>
 			getRecordsById({
