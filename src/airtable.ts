@@ -3,50 +3,42 @@
 
 import AirtableSDK from "airtable"
 
-import { getRecords, GetRecordsWithAirtable } from "./getRecords"
+import { getRecords } from "./getRecords"
 import { SchemaZodT } from "./types/schema"
+import { SelectQueryParamsT } from "./types/queryParams"
+import { getRecordsById } from "./getRecordsById"
 
-interface ZodAirtable {
+interface ZodAirtable<T extends SchemaZodT> {
 	apiKey: string
-	defaultBaseId?: string
+	defaultBaseId: string
+	defaultTableId: string
+	defaultSchema: T
 }
 
-export default function zodAirtable ({
+export default function zodAirtable<T extends SchemaZodT>({
 	apiKey,
-	defaultBaseId
-}: ZodAirtable) {
+	defaultBaseId,
+	defaultTableId,
+	defaultSchema,
+}: ZodAirtable<T>) {
 	const airtable = new AirtableSDK({ apiKey })
 
-	// TODO: auto-curry in TS?
-	if (!defaultBaseId) {
-		return {
-			getRecords: <T extends SchemaZodT>({
-				tableId,
-				schema,
-				baseId,
-				query
-			}: Omit<GetRecordsWithAirtable<T>, 'airtable'>) => getRecords({
+	return {
+		getRecords: (query?: SelectQueryParamsT) =>
+			getRecords({
 				airtable,
-				tableId,
-				schema,
-				baseId,
-				query
-			})
-		}
-	} else {
-		return {
-			getRecords: <T extends SchemaZodT>({
-				tableId,
-				schema,
-				baseId,
-				query
-			}: Omit<GetRecordsWithAirtable<T>, 'airtable' | 'baseId'> & { baseId?: string }) => getRecords({
+				tableId: defaultTableId,
+				schema: defaultSchema,
+				baseId: defaultBaseId,
+				query,
+			}),
+		getRecordsById: ({ recordIds }: { recordIds: Array<string> }) =>
+			getRecordsById({
 				airtable,
-				tableId,
-				schema,
-				baseId: baseId || defaultBaseId,
-				query
-			})
-		}
+				tableId: defaultTableId,
+				schema: defaultSchema,
+				baseId: defaultBaseId,
+				recordIds,
+			}),
 	}
 }
