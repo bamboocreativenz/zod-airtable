@@ -1,33 +1,77 @@
+import { describe, expect, test } from "vitest"
 import { z } from "zod"
-import { ZodAirTable } from "../src"
-import { env } from "../src/env.ts"
 
-describe("Airtable", () => {
-	test("can listRecords", async () => {
-		const table = new ZodAirTable({
-			apiKey: env.AIRTABLE_API_KEY,
-			baseId: "appGjiqxJsDA2rAp4",
-			tableId: "TestData",
-			schema: z.object({ name: z.string() }),
+import zodAirtable from "../src/airtable.ts"
+import { getRecords } from "../src/getRecords.ts"
+
+import {
+	API_KEY,
+	BASE_ID,
+	TABLE_ID,
+	RECORD_ID_1,
+	RECORD_ID_2,
+} from "./constants.ts"
+
+import mocks from "./mocks.ts"
+
+describe("zod-airtable", () => {
+	test("can getRecords with direct usage", async () => {
+		const expected = mocks.getRecordsMock.records.map((r) => ({
+			success: true,
+			data: r,
+		}))
+
+		const actual = await getRecords({
+			airtable: API_KEY,
+			baseId: BASE_ID,
+			tableId: TABLE_ID,
+			schema: z.object({
+				Name: z.string(),
+			}),
 		})
 
-		const expected = [
-			{ name: "Test Testerson", Notes: "a test user", Status: "Done" },
-			{
-				name: "John Smith",
-				Notes: "a second test user",
-				Status: "In progress",
-			},
-		]
+		expect(actual).toEqual(expected)
+	})
 
-		const uut = await table.listAllRecords({})
+	test("can getRecords with airtable singleton usage", async () => {
+		const expected = mocks.getRecordsMock.records.map((r) => ({
+			success: true,
+			data: r,
+		}))
 
-		if (!uut.ok) {
-			fail(uut.val)
-		} else {
-			const result = uut.val.flatMap((r) => (r.ok ? r.val : []))
-			expect(result.length).toBe(2)
-			expect(result.map((r) => r.fields)).toEqual(expected)
-		}
+		const singleton = zodAirtable({
+			apiKey: API_KEY,
+			defaultBaseId: BASE_ID,
+			defaultTableId: TABLE_ID,
+			defaultSchema: z.object({
+				Name: z.string(),
+			}),
+		})
+
+		const actual = await singleton.getRecords()
+
+		expect(actual).toEqual(expected)
+	})
+
+	test("can getRecordsByIds with airtable singleton usage", async () => {
+		const expected = mocks.getRecordsMock.records.map((r) => ({
+			success: true,
+			data: r,
+		}))
+
+		const singleton = zodAirtable({
+			apiKey: API_KEY,
+			defaultBaseId: BASE_ID,
+			defaultTableId: TABLE_ID,
+			defaultSchema: z.object({
+				Name: z.string(),
+			}),
+		})
+
+		const actual = await singleton.getRecordsById({
+			recordIds: [RECORD_ID_1, RECORD_ID_2],
+		})
+
+		expect(actual).toEqual(expected)
 	})
 })
