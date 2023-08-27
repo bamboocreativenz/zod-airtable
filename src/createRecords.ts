@@ -45,12 +45,11 @@ export function createRecords<T extends SchemaZodT>({
 		r.success === false ? r : []
 	)
 
-	let index = 0
-	let batches = []
-	for (index = 0; index < data.length; index += 10) {
-		let chunk = data.slice(index, index + 10)
-		batches.push(chunk)
-	}
+	const batchSize = 10
+	const batches = Array.from(
+		{ length: Math.ceil(data.length / batchSize) },
+		(_, i) => data.slice(i * batchSize, i * batchSize + batchSize)
+	)
 
 	return Promise.all(
 		batches.map((batch) => {

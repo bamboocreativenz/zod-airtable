@@ -69,18 +69,19 @@ export function getRecords<T extends SchemaZodT>({
 	})
 
 	if ("recordIds" in otherArgs) {
+		//TODO Consider moving to Promise.settled to account for request errors (how does airtable sdk handle this in .all() function?)
+		//DL Noticing: Here is a case where we are relying on the Airtable SDK to manage rate limiting/throttling and retrys
 		return Promise.all(
-			otherArgs.recordIds.map((id) => {
-				return airtable
-					.base(baseId)
-					.table(tableId)
-					.find(id)
-					.then((record) => {
-						// safeParseAsync in case of async refinements or transforms in schema, see https://zod.dev/?id=parseasync
-						return recordWithSchema.safeParseAsync(record)
-					})
+			otherArgs.recordIds.map(async (id) => {
+				return airtable.base(baseId).table(tableId).find(id)
 			})
-		)
+		).then((records) => {
+			return Promise.all(
+				records.map((r) => {
+					return recordWithSchema.safeParseAsync(r)
+				})
+			)
+		})
 	} else {
 		return airtable
 			.base(baseId)
@@ -89,8 +90,8 @@ export function getRecords<T extends SchemaZodT>({
 			.all()
 			.then((records) => {
 				return Promise.all(
-					records.map((record) => {
-						return recordWithSchema.safeParseAsync(record)
+					records.map((r) => {
+						return recordWithSchema.safeParseAsync(r)
 					})
 				)
 			})
