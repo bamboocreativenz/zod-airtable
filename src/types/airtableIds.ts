@@ -21,3 +21,9 @@ export const fieldIdZ = z
 	.min(12)
 	.max(20)
 	.startsWith("fld", "primaryFieldId must start with fld")
+
+export const recordIdZ = z
+	.string()
+	.min(12)
+	.max(20)
+	.startsWith("rec", "recordId must start with rec")
