@@ -89,8 +89,8 @@ export function getRecords<T extends SchemaZodT>({
 			.all()
 			.then((records) => {
 				return Promise.all(
-					records.map((r) => {
-						return recordWithSchema.safeParseAsync(r)
+					records.map((record) => {
+						return recordWithSchema.safeParseAsync(record)
 					})
 				)
 			})
