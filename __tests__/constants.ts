@@ -1,3 +1,5 @@
 export const API_KEY = "NOT_A_REAL_API_KEY"
 export const BASE_ID = "NOT_A_REAL_BASE_ID"
 export const TABLE_ID = "NOT_A_REAL_TABLE_ID"
+export const RECORD_ID_1 = "rec123"
+export const RECORD_ID_2 = "rec456"

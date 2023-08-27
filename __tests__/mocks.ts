@@ -1,22 +1,26 @@
 import { RecordT } from "../src/types/record"
+import { RECORD_ID_1, RECORD_ID_2 } from "./constants"
+
+const getRcordsByIdFirstMock: RecordT = {
+	id: RECORD_ID_1,
+	fields: {
+		Name: "Test Testerson",
+	},
+}
+
+const getRcordsByIdSecondMock: RecordT = {
+	id: RECORD_ID_2,
+	fields: {
+		Name: "Test Testerson",
+	},
+}
 
 const getRecordsMock: { records: Array<RecordT> } = {
-	records: [
-		{
-			id: "rec123",
-			fields: {
-				Name: "Test Testerson"
-			}
-		},
-		{
-			id: "rec124",
-			fields: {
-				Name: "John Smith"
-			}
-		},
-	]
+	records: [getRcordsByIdFirstMock, getRcordsByIdSecondMock],
 }
 
 export default {
-  getRecordsMock 
+	getRcordsByIdFirstMock,
+	getRcordsByIdSecondMock,
+	getRecordsMock,
 }
