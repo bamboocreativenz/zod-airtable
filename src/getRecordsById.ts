@@ -38,8 +38,6 @@ export async function getRecordsById<T extends SchemaZodT>({
 			return _airtable.base(baseId).table(tableId).find(id)
 		})
 	)
-	console.log(records.length)
-	console.log(records[0])
 	return await Promise.all(
 		records.map((r) => {
 			return recordWithSchema.safeParseAsync(r)
