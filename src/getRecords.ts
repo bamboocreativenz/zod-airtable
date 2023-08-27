@@ -45,6 +45,12 @@ export interface GetRecordsWithQueryAndApiKey<T extends SchemaZodT>
 	apiKey: string
 }
 
+export interface GetRecordsWithAirtable<T extends SchemaZodT>
+	extends GetRecordsWithIdsAndAirtable<T>,
+		GetRecordsWithQueryAndAirtable<T>,
+		GetRecordsWithIdsAndApiKey<T>,
+		GetRecordsWithQueryAndApiKey<T> {}
+
 //TODO Add jsdoc as the types are not clear
 export function getRecords<T extends SchemaZodT>({
 	tableId,
